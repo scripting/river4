@@ -11,7 +11,7 @@ var FeedParser = require ("feedparser");
 var request = require ("request");
 var urlpack = require ("url");
 var util = require ("util");
-
+    
 var s3path = process.env.s3path; //"/tmp.fargo.io/river4/";
 var s3UserListsPath = s3path + "lists/"; //where users store their lists
 var s3UserRiversPath = s3path + "rivers/"; //where we store their rivers

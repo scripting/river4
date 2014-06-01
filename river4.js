@@ -1,4 +1,4 @@
-var myVersion = "0.76", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.77", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http");
@@ -85,7 +85,7 @@ var whenLastEveryMinute = new Date ();
 
 
 
-
+ 
 
 var s3defaultType = "text/plain";
 var s3defaultAcl = "public-read";
@@ -211,7 +211,7 @@ function s3ListObjects (path, callback) {
 
 
 // Copyright 2013-2014, Small Picture, Inc.
-
+ 
 function sameDay (d1, d2) { 
 	//returns true if the two dates are on the same day
 	d1 = new Date (d1);
@@ -536,7 +536,7 @@ function stringPopLastField (s, chdelim) { //5/28/14 by DW
 	}
 
 
-var taskQ = [];
+var taskQ = []; 
 function qNotEmpty () {
 	return (taskQ.length > 0);
 	}
@@ -571,7 +571,7 @@ function qTest () {
 	setInterval (function () {qRunNextTask ()}, 1000); //call every second
 	}
 
-
+ 
 var riverCache = new Object (), flUseRiverCache = false;
 
 function clearBuildRiverCache () {
@@ -986,11 +986,11 @@ function addToFeedsArray (urlfeed, obj, listname) {
 		objnew.lists = [];
 		ixfeed = feedsArray.length;
 		feedsArray [ixfeed] = objnew;
+		for (var x in obj) { //6/1/14 by DW -- moved into the if, only copy fields if the item is new
+			feedsArray [ixfeed] [x] = obj [x];
+			}
 		}
 	
-	for (var x in obj) {
-		feedsArray [ixfeed] [x] = obj [x];
-		}
 	initFeedsArrayItem (obj);
 	
 	//add list name to the list of lists this feed belongs to
@@ -1261,7 +1261,7 @@ function saveFeed (feed) {
 	s3NewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", "public-read", function (error, data) {
 		});
 	}
-function readFeed (urlfeed, callback) {
+function readFeed (urlfeed) {
 	var starttime = new Date ();
 	initFeed (urlfeed, function (feed) {
 		if (feed.prefs.enabled) {
@@ -1320,12 +1320,13 @@ function readFeed (urlfeed, callback) {
 							break;
 							}
 						}
-				if (flnew) {
-					var obj = new Object (), flcallback = true;
+				if (flnew) { //add to the history array
+					var obj = new Object (), flAddToRiver = true;
 					obj.title = item.title; //helps with debugging
 					obj.guid = theGuid;
 					obj.when = starttime;
 					feed.history [feed.history.length] = obj;
+					
 					//stats
 						feed.stats.ctItems++;
 						feed.stats.whenLastNewItem = starttime;
@@ -1336,16 +1337,24 @@ function readFeed (urlfeed, callback) {
 					
 					//exclude items that newly appear in feed but have a too-old pubdate
 						if ((item.pubDate != null) && (new Date (item.pubDate) < dateYesterday (feed.stats.mostRecentPubDate)) && (!flfirstread)) { 
-							flcallback = false;
+							flAddToRiver = false;
 							feed.stats.ctItemsTooOld++;
 							feed.stats.whenLastTooOldItem = starttime;
 							}
 					
-					if ((flcallback) && (!flfirstread)) {
+					if ((flAddToRiver) && (!flfirstread)) {
 						addToRiver (urlfeed, item);
-						if (callback != undefined) {
-							callback (item, feed);
-							}
+						
+						//copy feed info from item into the feed record -- 6/1/14 by DW
+							feed.feedInfo.title = item.meta.title;
+							feed.feedInfo.link = item.meta.link;
+							feed.feedInfo.description = item.meta.description;
+						//copy feeds info from item into feeds in-memory array element -- 6/1/14 by DW
+							feedstats.title = item.meta.title;
+							feedstats.text = item.meta.title;
+							feedstats.htmlurl = item.meta.link;
+							feedstats.description = item.meta.description;
+							flFeedsArrayDirty = true;
 						}
 					}
 				
@@ -1367,9 +1376,6 @@ function readFeed (urlfeed, callback) {
 		});
 	}
 
-function qFeedRead (urlfeed) {
-	qAddTask ("readFeed (\"" + urlfeed + "\")");
-	}
 function readOneList (listname, filepath) {
 	console.log ("readOneList: listname == " + listname + ", filepath == " + filepath);
 	var opmlparser = new OpmlParser ();
@@ -1385,7 +1391,6 @@ function readOneList (listname, filepath) {
 			if (type == "feed") {
 				addToFeedsArray (outline.xmlurl, outline, listname);
 				addToFeedsInLists (outline.xmlurl); //5/30/14 by DW
-				
 				}
 			}
 		});

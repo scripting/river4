@@ -23,6 +23,12 @@ A node.js river-of-news aggregator that runs from Amazon S3.
 
     <code>http://aggregator.mydomain.com/serverdata</code>
 
+#### Notes
+
+1. I edit code in an outliner, which is then turned into JavaScript. The "opml" folder in the repository contains the versions of the code that I edit. The comments are stripped out of the code before it's converted to raw JS, so there is information for developers in the OPML that isn't in the main files (though all the running code is in both).
+
+2. The first released version is 0.76. They will increment by one one-hundredth every release. At some point I'll call it 1.0, then subsequent releases will be 1.01, 1.02 etc.
+
 #### Coming soon
 
 There will be an update to River4 that creates a tabbed river browser for you automatically, one that displays the contents of your river. It will also have a dashboard that monitors the aggregator.

@@ -9,7 +9,7 @@ A node.js river-of-news aggregator that runs from Amazon S3.
 
 2. On the node.js system, set an environment variable, s3path, to contain the path to the bucket created in step 1.
 
-   export s3path=/river.mydomain.com/
+   <code>export s3path=/river.mydomain.com/</code>
 
 3. Launch river4.js on a node.js system. Suppose that server is aggregator.mydomain.com.
 
@@ -21,7 +21,7 @@ A node.js river-of-news aggregator that runs from Amazon S3.
 
 7. If you want to watch the progress of the aggregator, you can view this page. 
 
-    http://aggregator.mydomain.com/serverdata
+    <code>http://aggregator.mydomain.com/serverdata</code>
 
 #### Coming soon
 

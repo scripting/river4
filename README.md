@@ -3,6 +3,14 @@ river4
 
 A node.js river-of-news aggregator that runs from Amazon S3.
 
+#### What you'll need
+
+1. A node.js installation.
+
+2. An Amazon account, and an S3 bucket to store the JSON files, and a small HTML file.
+
+3. One or more OPML subscription list files.
+
 #### How to install
 
 1. Create an S3 bucket to hold all your subscription lists, rivers, and data for the aggregator. 

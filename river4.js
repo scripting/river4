@@ -1,7 +1,7 @@
-var myVersion = "0.77", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.78", myProductName = "River4", flRunningOnServer = true;
 
 
-var http = require ("http");
+var http = require ("http"); 
 var https = require ("https");
 var AWS = require ("aws-sdk");
 var s3 = new AWS.S3 ();
@@ -12,15 +12,20 @@ var request = require ("request");
 var urlpack = require ("url");
 var util = require ("util");
     
-var s3path = process.env.s3path; //"/tmp.fargo.io/river4/";
+var s3path = process.env.s3path; 
 var s3UserListsPath = s3path + "lists/"; //where users store their lists
 var s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
 var s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
 var s3FeedsArrayPath = s3path + "data/feedsStats.json";
+var s3RiversArrayPath = s3path + "data/riversArray.json";
 var s3FeedsInListsPath = s3path + "data/feedsInLists.json";
 var s3FeedsDataFolder = s3path + "data/feeds/";
 var s3CalendarDataFolder = s3path + "data/calendar/";
 var s3ListsDataFolder = s3path + "data/lists/";
+var s3IndexFile = s3path + "index.html";
+
+var urlIndexSource = "http://fargo.io/code/river4/river4homepage.html";
+
 var whenServerStart = new Date ();
 var ct = 0, secsLastInit = 0;
 
@@ -1497,6 +1502,21 @@ function applyPrefs () {
 	http.globalAgent.maxSockets = serverData.prefs.maxThreads * 5;
 	https.globalAgent.maxSockets = serverData.prefs.maxThreads * 5;
 	}
+function copyIndexFile () { //6/1/14 by DW
+	if (serverData.prefs.enabled) {
+		s3GetObject (s3IndexFile, function (error, data) {
+			if (error) {
+				request (urlIndexSource, function (error, response, htmltext) {
+					if (!error && response.statusCode == 200) {
+						s3NewObject (s3IndexFile, htmltext, "text/html", "public-read", function (error, data) {
+							console.log ("copyIndexFile: " + s3IndexFile);
+							});
+						}
+					});
+				}
+			});
+		}
+	}
 function everyQuarterSecond () {
 	if (serverData.prefs.enabled) {
 		if (countHttpSockets () < serverData.prefs.maxThreads) {
@@ -1554,10 +1574,29 @@ function everyMinute () {
 			}
 		}
 	}
+function buildRiversArray () { //6/1/14 by DW
+	var riversArray = new Array ();
+	for (var i = 0; i < serverData.stats.listNames.length; i++) {
+		var obj = new Object (), rivername = stringPopLastField (serverData.stats.listNames [i], ".");
+		obj.url = "rivers/" + rivername + ".js"; //designed for an app running at the top level of the bucket
+		obj.title = rivername;
+		obj.longTitle =  rivername;
+		obj.description = "";
+		riversArray [i] = obj;
+		}
+	s3NewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", "public-read", function (error, data) {
+		console.log ("buildRiversArray: " + s3RiversArrayPath);
+		});
+	}
 function buildAllRivers () {
 	for (var i = 0; i < serverData.stats.listNames.length; i++) {
 		qAddTask ("buildOneRiver (\"" + serverData.stats.listNames [i] + "\")");
 		}
+	}
+function everyFiveMinutes () {
+	buildAllRivers ();
+	buildRiversArray ();
+	copyIndexFile (); //6/1/14 by DW
 	}
 function startup () {
 	var myPort = Number (process.env.PORT || 1337);
@@ -1568,6 +1607,7 @@ function startup () {
 	
 	loadServerData (function () {
 		applyPrefs ();
+		copyIndexFile (); //6/1/14 by DW
 		
 		
 		saveServerData (); //so hours-server-up stats update immediately
@@ -1579,7 +1619,7 @@ function startup () {
 				setInterval (function () {everySecond ()}, 1000); 
 				setInterval (function () {everyQuarterSecond ()}, 250);
 				setInterval (function () {everyMinute ()}, 60000); 
-				setInterval (function () {buildAllRivers ()}, 300000); 
+				setInterval (function () {everyFiveMinutes ()}, 300000); 
 				
 				http.createServer (function (httpRequest, httpResponse) {
 					try {

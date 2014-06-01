@@ -21,7 +21,7 @@ A node.js river-of-news aggregator that runs from Amazon S3.
 
 3. Launch river4.js on a node.js system. Suppose that server is aggregator.mydomain.com.
 
-4. Look in the bucket. You should see a data folder, with a single file in it containing the default value of prefs and stats for the app.
+4. Look in the bucket. You should see a data folder, with a single file in it containing the default value of prefs and stats for the app. There's also an index.html file, which will display your rivers in a simple way, providing code you can crib to create your own way of browsing (room for improvement here, for sure).
 
 5. Create a folder at the top level of the bucket called "lists". Save one or more OPML subscription lists into that folder.
 
@@ -37,7 +37,5 @@ A node.js river-of-news aggregator that runs from Amazon S3.
 
 2. The first released version is 0.76. They will increment by one one-hundredth every release. At some point I'll call it 1.0, then subsequent releases will be 1.01, 1.02 etc.
 
-#### Coming soon
-
-There will be an update to River4 that creates a tabbed river browser for you automatically, one that displays the contents of your river. It will also have a dashboard that monitors the aggregator.
+3. When you set up your S3 bucket, make sure that web hosting is enabled and index.html is the name of your index file. Here's a <a href="http://static.scripting.com/larryKing/images/2014/06/01/bucketSetup.gif">screen shot</a> that shows how to set it up. 
 

@@ -1,0 +1,21 @@
+{
+  "name": "river4",
+  "subdomain": "river4",
+  "description": "River of news aggregator that works with S3 structures.",
+  "author": "Dave Winer <dave@smallpicture.com>",
+  "version": "0.0.76",
+  "scripts": {
+     "start": "node river4.js"
+     },
+  "dependencies" : {
+    "aws-sdk": "*", 
+    "request": "*",
+    "md5": "*",
+    "feedparser": "*",
+    "opmlparser": "*"
+    }, 
+  "license": "GPL",
+  "engines": {
+    "node": "0.6.x"
+    }
+  }

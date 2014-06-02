@@ -1,4 +1,4 @@
-var myVersion = "0.80", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.81", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -487,15 +487,21 @@ function dateYesterday (d) {
 function stripMarkup (s) { //5/24/14 by DW
 	return (s.replace (/(<([^>]+)>)/ig, ""));
 	}
-function maxStringLength (s, len, flWholeWordAtEnd) {
+function maxStringLength (s, len, flWholeWordAtEnd, flAddElipses) {
 	if (flWholeWordAtEnd == undefined) {
 		flWholeWordAtEnd = true;
+		}
+	if (flAddElipses == undefined) { //6/2/14 by DW
+		flAddElipses = true;
 		}
 	if (s.length > len) {
 		s = s.substr (0, len);
 		if (flWholeWordAtEnd) {
 			while (s.length > 0) {
 				if (s [s.length - 1] == " ") {
+					if (flAddElipses) {
+						s += "...";
+						}
 					break;
 					}
 				s = s.substr (0, s.length - 1); //pop last char
@@ -830,7 +836,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		//description
 			item.description = trimWhitespace (getString (itemFromParser.description));
 			if (item.description.length > serverData.prefs.maxBodyLength) {
-				item.description = trimWhitespace (maxStringLength (item.description, serverData.prefs.maxBodyLength)) + "...";
+				item.description = trimWhitespace (maxStringLength (item.description, serverData.prefs.maxBodyLength));
 				}
 		//permalink -- updated 5/30/14 by DW
 			if (itemFromParser.permalink == undefined) {
@@ -855,6 +861,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		serverData.stats.ctStoriesAdded++;
 		serverData.stats.ctStoriesAddedThisRun++;
 		serverData.stats.whenLastStoryAdded = now;
+		serverData.stats.lastStoryAdded = item;
 	
 	//show in console
 		var consolemsg = itemFromParser.title;

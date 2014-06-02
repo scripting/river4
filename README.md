@@ -47,6 +47,10 @@ River4 is a node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-w
 
 #### Changes
 
+##### v0.81 -- 6/02/14 by DW
+
+serverData.stats now has a copy of the last story added to the river. The dashboard page displays it.
+
 ##### v0.80 -- 6/02/14 by DW
 
 New "dashboard" feature. If your server is running at aggregator.mydomain.com, if you go to:

@@ -45,3 +45,16 @@ River4 is a node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-w
 
 3. When you set up your S3 bucket, make sure that web hosting is enabled and index.html is the name of your index file. Here's a <a href="http://static.scripting.com/larryKing/images/2014/06/01/bucketSetup.gif">screen shot</a> that shows how to set it up. 
 
+#### Changes
+
+##### v0.80 -- 6/02/14 by DW
+
+New "dashboard" feature. If your server is running at aggregator.mydomain.com, if you go to:
+
+<code>http://aggregator.mydomain.com/dashboard</code>
+
+You'll get a real-time readout of what your aggregator is doing. 
+
+The HTML source for the dashboard page is in dashboard.opml in the opml folder in the repository.
+
+

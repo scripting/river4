@@ -1,4 +1,4 @@
-var myVersion = "0.79", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.80", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -25,6 +25,7 @@ var s3ListsDataFolder = s3path + "data/lists/";
 var s3IndexFile = s3path + "index.html";
 
 var urlIndexSource = "http://fargo.io/code/river4/river4homepage.html";
+var urlDashboardSource = "http://fargo.io/code/river4/dashboard.html";
 
 var whenServerStart = new Date ();
 var ct = 0, secsLastInit = 0;
@@ -1675,6 +1676,14 @@ function startup () {
 										loadListsFromFolder ();
 										httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 										httpResponse.end ("We're reading the lists, right now, as we speak.");    
+									case "/dashboard": //6/2/14 by DW
+										httpResponse.writeHead (200, {"Content-Type": "text/html"});
+										request (urlDashboardSource, function (error, response, htmltext) {
+											if (!error && response.statusCode == 200) {
+												httpResponse.end (htmltext);    
+												}
+											});
+										break;
 									default: //404 not found
 										httpResponse.writeHead (404, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 										httpResponse.end ("\"" + parsedUrl.pathname.toLowerCase () + "\" is not one of the endpoints defined by this server.");

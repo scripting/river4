@@ -1,7 +1,7 @@
 river4
 ======
 
-River4 is a node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">river-of-news</a> aggregator that runs from Amazon S3.
+River4 is a node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">river-of-news</a> aggregator that stores its lists and data in Amazon S3.
 
 #### What you'll need
 

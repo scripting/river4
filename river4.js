@@ -1,4 +1,4 @@
-var myVersion = "0.78", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.79", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -719,7 +719,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 									if (story.enclosure != undefined) {
 										var flgood = true;
 										
-										if ((story.enclosure.type == undefined) || (story.enclosure.length == undefined)) { //both are required
+										if ((story.enclosure.type == undefined) || (story.enclosure.length === undefined)) { //both are required
 											flgood = false; //sorry! :-(
 											}
 										else {

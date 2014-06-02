@@ -1,7 +1,7 @@
 river4
 ======
 
-A node.js river-of-news aggregator that runs from Amazon S3.
+A node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">river-of-news</a> aggregator that runs from Amazon S3.
 
 #### What you'll need
 
@@ -19,15 +19,21 @@ A node.js river-of-news aggregator that runs from Amazon S3.
 
    <code>export s3path=/river.mydomain.com/</code>
 
-3. Launch river4.js on a node.js system. Suppose that server is aggregator.mydomain.com.
+3. Again, on the node.js system, set the two AWS environment variables. This allows the River4 app to write to your bucket.
 
-4. Look in the bucket. You should see a data folder, with a single file in it containing the default value of prefs and stats for the app. There's also an index.html file, which will display your rivers in a simple way, providing code you can crib to create your own way of browsing (room for improvement here, for sure).
+   <code>export AWS_ACCESS_KEY_ID=12345</code>
 
-5. Create a folder at the top level of the bucket called "lists". Save one or more OPML subscription lists into that folder.
+   <code>export AWS_SECRET_ACCESS_KEY=TUVWXYZ</code>
 
-6. After a while you should see a new folder called "rivers" created automatically by the software. In that folder you should see one JSON file for each list. It contains the news from those feeds, discovered by River4. This format is designed to plug into the beautfiul" river displayer. 
+4. Launch river4.js on a node.js system. Suppose that server is aggregator.mydomain.com.
 
-7. If you want to watch the progress of the aggregator, you can view this page. 
+5. Look in the bucket. You should see a data folder, with a single file in it containing the default value of prefs and stats for the app. There's also an index.html file, which will display your rivers in a simple way, providing code you can crib to create your own way of browsing (room for improvement here, for sure).
+
+6. Create a folder at the top level of the bucket called "lists". Save one or more OPML subscription lists into that folder.
+
+7. After a while you should see a new folder called "rivers" created automatically by the software. In that folder you should see one JSON file for each list. It contains the news from those feeds, discovered by River4. This format is designed to plug into the beautfiul" river displayer. 
+
+8. If you want to watch the progress of the aggregator, you can view this page. 
 
     <code>http://aggregator.mydomain.com/serverdata</code>
 

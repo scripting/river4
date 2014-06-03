@@ -51,6 +51,16 @@ River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsA
 
 2. <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">Why every news organization should have a river</a>.
 
+3. <a href="http://scripting.com/2014/02/06/herokuForPoetsBeta.html">Heroku How To</a> -- shows you how to get a server up and running with <a href="https://github.com/scripting/fargoPublisher">Fargo Publisher</a>, the back-end for <a href="http://fargo.io/">Fargo</a>. 
+
+4. <a href="http://scripting.com/2014/04/20/barebonesHerokuDo.html">Bare-bones Heroku do</a> -- a more generic checklist for setting up a Heroku server running Node.js from a Macintosh desktop.
+
+#### Thanks!
+
+Thanks to two developer friends, Dan MacTough and Eric Kidd, who helped this Node.js newbie get this app up and running. 
+
+Specifically thanks to Dan for writing the excellent <a href="https://github.com/danmactough/node-feedparser">feedparser</a> and <a href="https://github.com/danmactough/node-opmlparser">opmlparser</a> packages that are incorporated in River4. 
+
 #### Changes
 
 ##### v0.81 -- 6/02/14 by DW

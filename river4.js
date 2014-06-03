@@ -1,4 +1,4 @@
-var myVersion = "0.81", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.82", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -38,7 +38,6 @@ var serverData = {
 		maxThreads: 10,
 		ctReadsPerSecond: 2,
 		maxRiverItems: 100,
-		nameLocalTimezone: "Eastern",
 		maxBodyLength: 280,
 		flSkipDuplicateTitles: true,
 		flWriteItemsToFiles: false //debugging -- 5/30/14 by DW

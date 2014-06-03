@@ -1,7 +1,7 @@
 river4
 ======
 
-River4 is a node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">river-of-news</a> aggregator that stores its lists and data in Amazon S3.
+River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">river-of-news</a> aggregator that stores its lists and data in Amazon S3.
 
 #### What you'll need
 
@@ -44,6 +44,12 @@ River4 is a node.js <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-w
 2. The first released version is 0.79. They will increment by one one-hundredth every release. At some point I'll call it 1.0, then subsequent releases will be 1.01, 1.02 etc.
 
 3. When you set up your S3 bucket, make sure that web hosting is enabled and index.html is the name of your index file. Here's a <a href="http://static.scripting.com/larryKing/images/2014/06/01/bucketSetup.gif">screen shot</a> that shows how to set it up. 
+
+#### Links
+
+1. <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">What is a River of News aggregator?</a>
+
+2. <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">Why every news organization should have a river</a>.
 
 #### Changes
 

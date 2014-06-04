@@ -78,7 +78,7 @@ var serverData = {
 		},
 	flags: []
 	}
-var flHaveServerData = false;
+var flHaveServerData = false; 
 
 var feedsArray = [], flFeedsArrayDirty = false;
 

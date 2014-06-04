@@ -3,6 +3,14 @@ river4
 
 River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">river-of-news</a> aggregator that stores its lists and data in Amazon S3.
 
+####Overview
+
+We have a <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">press backgrounder</a> for River4 here. If you're wondering what it is, or why it's significant, this is the first place to go.
+
+If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">support mail list</a>, with people who have successfully set up and are running River4 installations. If you're having trouble, this is the place to go.
+
+If you're ready to install the software, you've come to the right place! :-)
+
 #### What you'll need
 
 1. A node.js installation.

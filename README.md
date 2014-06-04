@@ -63,6 +63,12 @@ If you're ready to install the software, you've come to the right place! :-)
 
 4. <a href="http://scripting.com/2014/04/20/barebonesHerokuDo.html">Bare-bones Heroku do</a> -- checklist for setting up a Heroku server running Node.js from a Mac desktop.
 
+5. <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">Welcome to River4</a>.
+
+6. The River4 support <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">mail list</a>. 
+
+7. <a href="http://scripting.com/2014/03/19/howToAskForHelpWithSoftware.html">How to ask for help with software</a>.
+
 #### Thanks!
 
 Thanks to two developer friends, Dan MacTough and Eric Kidd, who helped this Node.js newbie get this app up and running. 

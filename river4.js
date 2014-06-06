@@ -1,4 +1,4 @@
-var myVersion = "0.82", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.83", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -545,6 +545,13 @@ function stringPopLastField (s, chdelim) { //5/28/14 by DW
 		}
 	return (s);
 	}
+function filledString (ch, ct) { //6/4/14 by DW
+	var s = "";
+	for (var i = 0; i < ct; i++) {
+		s += ch;
+		}
+	return (s);
+	}
 
 
 var taskQ = []; 
@@ -616,7 +623,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 					callback (undefined);
 					}
 				else {
-					var struct = JSON.parse (data.Body);
+					var struct = parseJson (data.Body, s3path);
 					callback (struct);
 					}
 				});
@@ -628,7 +635,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 					callback (undefined);
 					}
 				else {
-					var struct = JSON.parse (jsontext);
+					var struct = parseJson (jsontext);
 					callback (struct);
 					}
 				});
@@ -766,6 +773,23 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 
 
 
+function parseJson (jsontext, s3Path) {
+	var obj;
+	try {
+		return (JSON.parse (jsontext));
+		}
+	catch (err) {
+		if (s3Path == undefined) {
+			console.log ("parseJson, error: " + err.message);
+			}
+		else {
+			console.log ("parseJson, error with S3 file: " + s3Path + ", " + err.message);
+			}
+		
+		
+		return (new Object ());
+		}
+	}
 function countHttpSockets () {
 	var ct = Object.keys (http.globalAgent.requests).length;
 	if (ct == undefined) {
@@ -778,7 +802,7 @@ function loadTodaysRiver (callback) {
 	console.log ("loadTodaysRiver: " + s3path);
 	s3GetObject (s3path, function (error, data) {
 		if (!error) {
-			todaysRiver = JSON.parse (data.Body);
+			todaysRiver = parseJson (data.Body, s3path);
 			}
 		if (callback != undefined) {
 			callback ();
@@ -877,7 +901,7 @@ function loadServerData (callback) {
 			console.log ("loadServerData: error == " + error.message);
 			}
 		else {
-			var oldServerData = JSON.parse (data.Body);
+			var oldServerData = parseJson (data.Body, s3PrefsAndStatsPath);
 			for (var x in oldServerData.prefs) { 
 				serverData.prefs [x] = oldServerData.prefs [x];
 				}
@@ -1026,7 +1050,7 @@ function saveFeedsArray () {
 function loadFeedsArray (callback) {
 	s3GetObject (s3FeedsArrayPath, function (error, data) {
 		if (!error) {
-			feedsArray = JSON.parse (data.Body);
+			feedsArray = parseJson (data.Body, s3FeedsArrayPath);
 			for (var i = 0; i < feedsArray.length; i++) {
 				initFeedsArrayItem (feedsArray [i]);
 				}
@@ -1148,7 +1172,7 @@ function initFeed (urlfeed, callback, flwrite) {
 			obj = new Object ();
 			}
 		else {
-			obj = JSON.parse (data.Body);
+			obj = parseJson (data.Body, infofilepath);
 			}
 		
 		//prefs
@@ -1428,7 +1452,7 @@ function initList (name, callback) {
 			obj = new Object ();
 			}
 		else {
-			obj = JSON.parse (data.Body);
+			obj = parseJson (data.Body, infofilepath);
 			}
 		
 		//prefs

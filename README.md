@@ -77,6 +77,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.83 -- 6/06/14 by DW
+
+Now if there's an error in any JSON code we try to parse, we display an error message in the console, along with the path to the S3 file we were trying to read. 
+
 ##### v0.81 -- 6/02/14 by DW
 
 serverData.stats now has a copy of the last story added to the river. The dashboard page displays it.

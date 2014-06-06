@@ -77,6 +77,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.84 -- 6/06/14 by DW
+
+Two fixes, explained <a href="http://river4.smallpict.com/2014/06/06/river4V084.html">here</a>.
+
 ##### v0.83 -- 6/06/14 by DW
 
 Now if there's an error in any JSON code we try to parse, we display an error message in the console, along with the path to the S3 file we were trying to read. 

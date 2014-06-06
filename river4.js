@@ -1,4 +1,4 @@
-var myVersion = "0.83", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.84", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -683,9 +683,11 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 						var story = theDaysRiver [i], flskip = false, reducedtitle;
 						if (flSkipDuplicateTitles) { //5/29/14 by DW
 							reducedtitle = trimWhitespace (stringLower (story.title));
-							if (titles [reducedtitle] != undefined) { //duplicate
-								ctDuplicatesSkipped++;
-								flskip = true;
+							if (reducedtitle.length > 0) { //6/6/14 by DW
+								if (titles [reducedtitle] != undefined) { //duplicate
+									ctDuplicatesSkipped++;
+									flskip = true;
+									}
 								}
 							}
 						if (!flskip) {
@@ -1620,8 +1622,12 @@ function buildRiversArray () { //6/1/14 by DW
 		});
 	}
 function buildAllRivers () {
-	for (var i = 0; i < serverData.stats.listNames.length; i++) {
-		qAddTask ("buildOneRiver (\"" + serverData.stats.listNames [i] + "\")");
+	for (var i = 0; i < serverData.stats.listNames.length; i++) { 
+		var listname = "\"" + serverData.stats.listNames [i] + "\"";
+		var flskip = serverData.prefs.flSkipDuplicateTitles;
+		var s = "buildOneRiver (" + listname + ", true, " + flskip + ", true);";
+		qAddTask (s);
+		
 		}
 	}
 function everyFiveMinutes () {

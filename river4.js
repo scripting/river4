@@ -1,4 +1,4 @@
-var myVersion = "0.84", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.85", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -730,6 +730,9 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 								theItem.body = story.description;
 								theItem.pubDate = new Date (story.pubdate).toUTCString ();
 								theItem.permaLink = story.permalink;
+								if (story.comments.length > 0) { //6/7/14 by DW
+									theItem.comments = story.comments;
+									}
 								//enclosure -- 5/30/14 by DW
 									if (story.enclosure != undefined) {
 										var flgood = true;
@@ -1511,6 +1514,9 @@ function initList (name, callback) {
 	}
 function loadListsFromFolder () {
 	var now = new Date ();
+	for (var i = 0; i < feedsArray.length; i++) { //6/7/14 by DW
+		feedsArray [i].lists = [];
+		}
 	serverData.stats.ctListFolderReads++;
 	serverData.stats.whenLastListFolderRead = now;
 	serverData.stats.listNames = new Array ();

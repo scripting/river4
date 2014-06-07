@@ -77,6 +77,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.85 -- 6/07/14 by DW
+
+Two fixes, explained <a href="http://river4.smallpict.com/2014/06/07/river4V085.html">here</a>.
+
 ##### v0.84 -- 6/06/14 by DW
 
 Two fixes, explained <a href="http://river4.smallpict.com/2014/06/06/river4V084.html">here</a>.

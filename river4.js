@@ -1,4 +1,4 @@
-var myVersion = "0.85", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.86", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -1430,8 +1430,10 @@ function readOneList (listname, filepath) {
 		while (outline = this.read ()) {
 			var type = outline ["#type"];
 			if (type == "feed") {
-				addToFeedsArray (outline.xmlurl, outline, listname);
-				addToFeedsInLists (outline.xmlurl); //5/30/14 by DW
+				if ((outline.xmlurl != undefined) && (outline.xmlurl.length > 0)) { //6/9/14 by DW
+					addToFeedsArray (outline.xmlurl, outline, listname); 
+					addToFeedsInLists (outline.xmlurl); //5/30/14 by DW
+					}
 				}
 			}
 		});

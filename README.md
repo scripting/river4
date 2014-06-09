@@ -77,6 +77,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.86 -- 6/09/14 by DW
+
+Fixed a bug that would cause River4 to crash when reading an item from a subscription list that didn't have an xmlUrl attribute. 
+
 ##### v0.85 -- 6/07/14 by DW
 
 Two fixes, explained <a href="http://river4.smallpict.com/2014/06/07/river4V085.html">here</a>.

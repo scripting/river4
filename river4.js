@@ -1,4 +1,4 @@
-var myVersion = "0.86", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.87", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -484,6 +484,9 @@ function dateYesterday (d) {
 	return (new Date (new Date (d) - (24 * 60 * 60 * 1000)));
 	}
 function stripMarkup (s) { //5/24/14 by DW
+	if ((s === undefined) || (s == null) || (s.length == 0)) {
+		return ("");
+		}
 	return (s.replace (/(<([^>]+)>)/ig, ""));
 	}
 function maxStringLength (s, len, flWholeWordAtEnd, flAddElipses) {

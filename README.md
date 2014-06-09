@@ -77,6 +77,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.87 -- 6/09/14 by DW
+
+Fixed a bug that would cause River4 to crash when processing an item with a null title. 
+
 ##### v0.86 -- 6/09/14 by DW
 
 Fixed a bug that would cause River4 to crash when reading an item from a subscription list that didn't have an xmlUrl attribute. 

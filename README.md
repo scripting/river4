@@ -77,6 +77,12 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.88 -- 6/17/14 by DW
+
+A subscription list can now contain an include node, so you can have a list of lists. Full explanation in this <a href="http://river4.smallpict.com/2014/06/17/river4V088.html">blog post</a>.
+
+Changed the package.json file to require Node v0.8.x. Previously it was 0.6.x. This should make it possible to deploy on Nodejitsu without modification, per <a href="https://groups.google.com/d/msg/river4/r8kSLjfZo6Q/msXpBg_6zG0J">Dave Seidel's report</a>.
+
 ##### v0.87 -- 6/09/14 by DW
 
 Fixed a bug that would cause River4 to crash when processing an item with a null title. 

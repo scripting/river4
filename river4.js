@@ -1,4 +1,4 @@
-var myVersion = "0.87", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.88", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -1420,6 +1420,39 @@ function readFeed (urlfeed) {
 		});
 	}
 
+function readIncludedList (listname, urloutline) { //6/17/14 by DW
+	var req = request (urloutline);
+	var opmlparser = new OpmlParser ();
+	
+	console.log ("readIncludedList: listname == " + listname + ", urloutline == " + urloutline);
+	
+	req.on ("response", function (res) {
+		var stream = this;
+		if (res.statusCode == 200) {
+			stream.pipe (opmlparser);
+			}
+		});
+	req.on ("error", function (res) {
+		});
+	opmlparser.on ("error", function (error) {
+		console.log ("readIncludedList: opml parser error == " + error.message);
+		});
+	opmlparser.on ("readable", function () {
+		var outline;
+		while (outline = this.read ()) {
+			var type = outline ["#type"];
+			if (type == "feed") {
+				if ((outline.xmlurl != undefined) && (outline.xmlurl.length > 0)) { //6/9/14 by DW
+					addToFeedsArray (outline.xmlurl, outline, listname); 
+					addToFeedsInLists (outline.xmlurl); //5/30/14 by DW
+					}
+				}
+			}
+		});
+	opmlparser.on ("end", function () {
+		});
+	}
+
 function readOneList (listname, filepath) {
 	console.log ("readOneList: listname == " + listname + ", filepath == " + filepath);
 	var opmlparser = new OpmlParser ();
@@ -1432,10 +1465,18 @@ function readOneList (listname, filepath) {
 		var outline;
 		while (outline = this.read ()) {
 			var type = outline ["#type"];
+			
 			if (type == "feed") {
 				if ((outline.xmlurl != undefined) && (outline.xmlurl.length > 0)) { //6/9/14 by DW
 					addToFeedsArray (outline.xmlurl, outline, listname); 
 					addToFeedsInLists (outline.xmlurl); //5/30/14 by DW
+					}
+				}
+			else { //6/17/14 by DW
+				if (outline.type != undefined) {
+					if (outline.type == "include") {
+						qAddTask ("readIncludedList (\"" + listname + "\", \"" + outline.url + "\")");
+						}
 					}
 				}
 			}

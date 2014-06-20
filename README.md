@@ -77,6 +77,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.89 -- 6/19/14 by DW
+
+One small change to package.json, and no changes to the JavaScript code.
+
 ##### v0.88 -- 6/17/14 by DW
 
 A subscription list can now contain an include node, so you can have a list of lists. Full explanation in this <a href="http://river4.smallpict.com/2014/06/17/river4V088.html">blog post</a>.

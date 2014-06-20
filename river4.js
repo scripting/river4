@@ -1,4 +1,4 @@
-var myVersion = "0.88", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.89", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -215,8 +215,6 @@ function s3ListObjects (path, callback) {
 
 
 
-// Copyright 2013-2014, Small Picture, Inc.
- 
 function sameDay (d1, d2) { 
 	//returns true if the two dates are on the same day
 	d1 = new Date (d1);

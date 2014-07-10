@@ -1,4 +1,4 @@
-var myVersion = "0.89", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.90", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 

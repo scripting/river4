@@ -69,6 +69,8 @@ If you're ready to install the software, you've come to the right place! :-)
 
 7. <a href="http://scripting.com/2014/03/19/howToAskForHelpWithSoftware.html">How to ask for help with software</a>.
 
+8. Chris Dadswell wrote a <a href="http://scriven.chrisdadswell.co.uk/users/scriven/articles/howToSetupAFargoRiverOfNews.html">tutorial</a> for setting up your own River4 installation. 
+
 #### Thanks!
 
 Thanks to two developer friends, Dan MacTough and Eric Kidd, who helped this Node.js newbie get this app up and running. 

@@ -553,6 +553,20 @@ function filledString (ch, ct) { //6/4/14 by DW
 		}
 	return (s);
 	}
+function encodeXml (s) { //7/15/14 by DW
+	var charMap = {
+		'<': '&lt;',
+		'>': '&gt;',
+		'&': '&amp;',
+		'"': '&'+'quot;'
+		};
+	s = s.toString();
+	s = s.replace(/\u00A0/g, " ");
+	var escaped = s.replace(/[<>&"]/g, function(ch) {
+		return charMap [ch];
+		});
+	return escaped;
+	}
 
 
 var taskQ = []; 
@@ -729,6 +743,11 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 								theItem.title = story.title;
 								theItem.link = story.link;
 								theItem.body = story.description;
+								
+								if (story.outline != undefined) { //7/16/14 by DW
+									theItem.outline = story.outline;
+									}
+								
 								theItem.pubDate = new Date (story.pubdate).toUTCString ();
 								theItem.permaLink = story.permalink;
 								if (story.comments.length > 0) { //6/7/14 by DW
@@ -847,6 +866,42 @@ function checkRiverRollover () {
 function addToRiver (urlfeed, itemFromParser, callback) {
 	var now = new Date (), item = new Object ();
 	//copy selected elements from the object from feedparser, into the item for the river
+		function convertOutline (jstruct) { //7/16/14 by DW
+			var theNewOutline = {}, atts, subs;
+			if (jstruct ["source:outline"] != undefined) {
+				if (jstruct ["@"] != undefined) {
+					atts = jstruct ["@"];
+					subs = jstruct ["source:outline"];
+					}
+				else {
+					atts = jstruct ["source:outline"] ["@"];
+					subs = jstruct ["source:outline"] ["source:outline"];
+					}
+				}
+			else {
+				atts = jstruct ["@"];
+				subs = undefined;
+				}
+			for (var x in atts) {
+				theNewOutline [x] = atts [x];
+				}
+			if (subs != undefined) {
+				theNewOutline.subs = [];
+				if (subs instanceof Array) {
+					for (var i = 0; i < subs.length; i++) {
+						theNewOutline.subs [i] = convertOutline (subs [i]);
+						}
+					}
+				else {
+					theNewOutline.subs = [];
+					theNewOutline.subs [0] = {};
+					for (var x in subs ["@"]) {
+						theNewOutline.subs [0] [x] = subs ["@"] [x];
+						}
+					}
+				}
+			return (theNewOutline);
+			}
 		function getString (s) {
 			if (s == null) {
 				s = "";
@@ -878,6 +933,11 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		//enclosure -- 5/30/14 by DW
 			if (itemFromParser.enclosures != undefined) { //it's an array, we want the first one
 				item.enclosure = itemFromParser.enclosures [0];
+				}
+		//source:outline -- 7/16/14 by DW
+			if (itemFromParser ["source:outline"] != undefined) { //they're using a cool feature! :-)
+				item.outline = convertOutline (itemFromParser ["source:outline"]);
+				console.log ("addToRiver: outline == " + JSON.stringify (item.outline, undefined, 4)); 
 				}
 		item.pubdate = getDate (itemFromParser.pubDate);
 		item.comments = getString (itemFromParser.comments);

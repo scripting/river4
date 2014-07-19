@@ -81,7 +81,7 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 ##### v0.90 -- 7/19/14 by DW
 
-New <source:outline> elements flow through River4. See the docs for the <a href="http://source.smallpict.com/2014/07/12/theSourceNamespace.html">source namespace</a> for details. 
+New &lt;source:outline> elements flow through River4. See the docs for the <a href="http://source.smallpict.com/2014/07/12/theSourceNamespace.html">source namespace</a> for details. 
 
 ##### v0.89 -- 6/19/14 by DW
 

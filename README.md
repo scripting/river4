@@ -79,6 +79,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.91 -- 7/19/14 by DW
+
+A new environment variable, <i>s3defaultAcl,</i> if present specifies the permissions on S3 files we create. The default is public-read. With this parameter, it may be possible to run a private installation of River4. 
+
 ##### v0.90 -- 7/19/14 by DW
 
 New &lt;source:outline> elements flow through River4. See the docs for the <a href="http://source.smallpict.com/2014/07/12/theSourceNamespace.html">source namespace</a> for details. 

@@ -1,4 +1,4 @@
-var myVersion = "0.90", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.91", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -567,6 +567,46 @@ function encodeXml (s) { //7/15/14 by DW
 		});
 	return escaped;
 	}
+function hotUpText (s, url) { //7/18/14 by DW
+	
+	if (url == undefined) { //makes it easier to call -- 3/14/14 by DW
+		return (s);
+		}
+	
+	function linkit (s) {
+		return ("<a href=\"" + url + "\" target=\"_blank\">" + s + "</a>");
+		}
+	var ixleft = s.indexOf ("["), ixright = s.indexOf ("]");
+	if ((ixleft == -1) || (ixright == -1)) {
+		return (linkit (s));
+		}
+	if (ixright < ixleft) {
+		return (linkit (s));
+		}
+	
+	var linktext = s.substr (ixleft + 1, ixright - ixleft - 1); //string.mid (s, ixleft, ixright - ixleft + 1);
+	linktext = "<a href=\"" + url + "\" target=\"_blank\">" + linktext + "</a>";
+	
+	var leftpart = s.substr (0, ixleft);
+	var rightpart = s.substr (ixright + 1, s.length);
+	s = leftpart + linktext + rightpart;
+	return (s);
+	}
+function getFavicon (url) { //7/18/14 by DW
+	function getDomain (url) {
+		if (( url != null ) && (url != "")) {
+			url = url.replace("www.","").replace("www2.", "").replace("feedproxy.", "").replace("feeds.", "");
+			var root = url.split('?')[0]; // cleans urls of form http://domain.com?a=1&b=2
+			var url = root.split('/')[2];
+		}
+		return (url);
+		};
+	var domain = getDomain (url);
+	return ("http://www.google.com/s2/favicons?domain=" + domain);
+	};
+function jsonStringify (jstruct) { //7/19/14 by DW
+	return (JSON.stringify (jstruct, undefined, 4));
+	}
 
 
 var taskQ = []; 
@@ -673,7 +713,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 			}
 		if (flSave) {
 			var fname = stringPopLastField (listname, ".") + ".js";
-			s3NewObject (s3UserRiversPath + fname, jsontext, "application/json", "public-read", function (error, data) {
+			s3NewObject (s3UserRiversPath + fname, jsontext, "application/json", s3defaultAcl, function (error, data) {
 				console.log ("buildOneRiver: " + s3UserRiversPath + fname + ".");
 				serverData.stats.ctRiverJsonSaves++;
 				serverData.stats.whenLastRiverJsonSave = starttime;
@@ -839,7 +879,7 @@ function saveTodaysRiver (callback) {
 	
 	console.log ("saveTodaysRiver: " + getCalendarPath (dayRiverCovers));
 	
-	s3NewObject (getCalendarPath (dayRiverCovers), JSON.stringify (todaysRiver, undefined, 4), "application/json", "public-read", function (error, data) {
+	s3NewObject (getCalendarPath (dayRiverCovers), JSON.stringify (todaysRiver, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		serverData.stats.ctRiverSaves++;
 		serverData.stats.whenLastRiverSave = now;
 		if (!error) {
@@ -1022,7 +1062,7 @@ function updateStatsBeforeSave () {
 	}
 function saveServerData () {
 	updateStatsBeforeSave ();
-	s3NewObject (s3PrefsAndStatsPath, JSON.stringify (serverData, undefined, 4));
+	s3NewObject (s3PrefsAndStatsPath, JSON.stringify (serverData, undefined, 4), "application/json", s3defaultAcl);
 	}
 
 function addToFeedsInLists (urlfeed) { //5/30/14 by DW
@@ -1034,7 +1074,7 @@ function addToFeedsInLists (urlfeed) { //5/30/14 by DW
 		}
 	}
 function saveFeedsInLists () { //5/30/14 by DW
-	s3NewObject (s3FeedsInListsPath, JSON.stringify (feedsInLists, undefined, 4));
+	s3NewObject (s3FeedsInListsPath, JSON.stringify (feedsInLists, undefined, 4), "application/json", s3defaultAcl);
 	}
 function atLeastOneSubscriber (urlfeed) {
 	return (feedsInLists [urlfeed] != undefined);
@@ -1111,7 +1151,7 @@ function addToFeedsArray (urlfeed, obj, listname) {
 function saveFeedsArray () {
 	flFeedsArrayDirty = false;
 	console.log ("saveFeedsArray: " + s3FeedsArrayPath);
-	s3NewObject (s3FeedsArrayPath, JSON.stringify (feedsArray, undefined, 4));
+	s3NewObject (s3FeedsArrayPath, JSON.stringify (feedsArray, undefined, 4), "application/json", s3defaultAcl);
 	}
 function loadFeedsArray (callback) {
 	s3GetObject (s3FeedsArrayPath, function (error, data) {
@@ -1350,7 +1390,7 @@ function initFeed (urlfeed, callback, flwrite) {
 			}
 		
 		if (flwrite) {
-			s3NewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", "public-read", function (error, data) {
+			s3NewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 				secsLastInit = secondsSince (starttime);
 				});
 			}
@@ -1360,7 +1400,7 @@ function initFeed (urlfeed, callback, flwrite) {
 		});
 	}
 function saveFeed (feed) {
-	s3NewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", "public-read", function (error, data) {
+	s3NewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		});
 	}
 function readFeed (urlfeed) {
@@ -1462,7 +1502,7 @@ function readFeed (urlfeed) {
 				
 				if (serverData.prefs.flWriteItemsToFiles) { //debugging
 					var path = feed.stats.s3FolderPath + "items/" + padWithZeros (ctitemsthisfeed++, 3) + ".json";
-					s3NewObject (path, JSON.stringify (item, undefined, 4), "application/json", "public-read");
+					s3NewObject (path, JSON.stringify (item, undefined, 4), "application/json", s3defaultAcl);
 					}
 				});
 			feedparser.on ("end", function () {
@@ -1612,7 +1652,7 @@ function initList (name, callback) {
 			callback (obj);
 			}
 		
-		s3NewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", "public-read", function (error, data) {
+		s3NewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 			});
 		});
 	}
@@ -1651,7 +1691,7 @@ function copyIndexFile () { //6/1/14 by DW
 			if (error) {
 				request (urlIndexSource, function (error, response, htmltext) {
 					if (!error && response.statusCode == 200) {
-						s3NewObject (s3IndexFile, htmltext, "text/html", "public-read", function (error, data) {
+						s3NewObject (s3IndexFile, htmltext, "text/html", s3defaultAcl, function (error, data) {
 							console.log ("copyIndexFile: " + s3IndexFile);
 							});
 						}
@@ -1727,7 +1767,7 @@ function buildRiversArray () { //6/1/14 by DW
 		obj.description = "";
 		riversArray [i] = obj;
 		}
-	s3NewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", "public-read", function (error, data) {
+	s3NewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		console.log ("buildRiversArray: " + s3RiversArrayPath);
 		});
 	}
@@ -1747,6 +1787,10 @@ function everyFiveMinutes () {
 	}
 function startup () {
 	var myPort = Number (process.env.PORT || 1337);
+	
+	if (process.env.s3defaultAcl != undefined) { //7/19/14 by DW
+		s3defaultAcl = process.env.s3defaultAcl;
+		}
 	
 	console.log (""); console.log (""); console.log (""); 
 	console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");

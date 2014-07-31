@@ -79,6 +79,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.93 -- 7/31/14 by DW
+
+Added more fields to the struct the /status call returns. It now says what the s3path is, what port the server is running on, and if you've defined a s3defaultAcl (see v0.91) what the value of that parameter is.
+
 ##### v0.91 -- 7/19/14 by DW
 
 A new environment variable, <i>s3defaultAcl,</i> if present specifies the permissions on S3 files we create. The default is public-read. With this parameter, it may be possible to run a private installation of River4. 

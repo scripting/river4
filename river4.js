@@ -1,4 +1,4 @@
-var myVersion = "0.91", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.93", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -112,7 +112,7 @@ function s3SplitPath (path) { //split path like this: /tmp.scripting.com/testing
 		}
 	return ({Bucket: bucketname, Key: path});
 	}
-function s3NewObject (path, data, type, acl, callback) {
+function s3NewObject (path, data, type, acl, callback, metadata) {
 	var splitpath = s3SplitPath (path);
 	if (type == undefined) {
 		type = s3defaultType;
@@ -125,7 +125,8 @@ function s3NewObject (path, data, type, acl, callback) {
 		ContentType: type,
 		Body: data,
 		Bucket: splitpath.Bucket,
-		Key: splitpath.Key
+		Key: splitpath.Key,
+		Metadata: metadata
 		};
 	s3.putObject (params, function (err, data) { 
 		if (err) {
@@ -514,6 +515,9 @@ function random (lower, upper) {
 	var range = upper - lower + 1;
 	return (Math.floor ((Math.random () * range) + lower));
 	}
+function removeMultipleBlanks (s) { //7/30/14 by DW
+	return (s.toString().replace (/ +/g, " "));
+	}
 function stringAddCommas (x) { //5/27/14 by DW
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}
@@ -606,6 +610,26 @@ function getFavicon (url) { //7/18/14 by DW
 	};
 function jsonStringify (jstruct) { //7/19/14 by DW
 	return (JSON.stringify (jstruct, undefined, 4));
+	}
+function getURLParameter (name) { //7/21/14 by DW
+	return (decodeURI ((RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]));
+	}
+function urlSplitter (url) { //7/15/14 by DW
+	var pattern = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
+	var result = pattern.exec (url);
+	if (result == null) {
+		result = [];
+		result [5] = url;
+		}
+	var splitUrl = {
+		scheme: result [1],
+		host: result [3],
+		port: result [4],
+		path: result [5],
+		query: result [6],
+		hash: result [7]
+		};
+	return (splitUrl);
 	}
 
 
@@ -1836,6 +1860,9 @@ function startup () {
 											version: myVersion, 
 											now: now.toUTCString (), 
 											whenServerStart: whenServerStart.toUTCString (), 
+											s3Path: s3path, //7/31/14 by DW
+											port: myPort, //7/31/14 by DW
+											defaultAcl: process.env.s3defaultAcl, //7/31/14 by DW
 											hits: serverData.stats.ctHits, 
 											hitsToday: serverData.stats.ctHitsToday,
 											hitsThisRun: serverData.stats.ctHitsThisRun

@@ -87,6 +87,7 @@ var feedsInLists = {}, flFeedsInListsDirty = false; //5/30/14 by DW
 var todaysRiver = [], dayRiverCovers = new Date (), flRiverDirty = false;
 
 var whenLastEveryMinute = new Date ();
+var whenLastRiversBuild = new Date (); //8/6/14 by DW
 
 
 
@@ -1724,6 +1725,29 @@ function copyIndexFile () { //6/1/14 by DW
 			});
 		}
 	}
+function buildRiversArray () { //6/1/14 by DW -- build a data structure used by the river browser
+	var riversArray = new Array ();
+	for (var i = 0; i < serverData.stats.listNames.length; i++) {
+		var obj = new Object (), rivername = stringPopLastField (serverData.stats.listNames [i], ".");
+		obj.url = "rivers/" + rivername + ".js"; //designed for an app running at the top level of the bucket
+		obj.title = rivername;
+		obj.longTitle =  rivername;
+		obj.description = "";
+		riversArray [i] = obj;
+		}
+	s3NewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+		console.log ("buildRiversArray: " + s3RiversArrayPath);
+		});
+	}
+function buildAllRivers () { //queue up tasks to build each of the river.js files
+	for (var i = 0; i < serverData.stats.listNames.length; i++) { 
+		var listname = "\"" + serverData.stats.listNames [i] + "\"";
+		var flskip = serverData.prefs.flSkipDuplicateTitles;
+		var s = "buildOneRiver (" + listname + ", true, " + flskip + ", true);";
+		qAddTask (s);
+		}
+	whenLastRiversBuild = new Date (); //8/6/14 by DW
+	}
 function everyQuarterSecond () {
 	if (serverData.prefs.enabled) {
 		if (countHttpSockets () < serverData.prefs.maxThreads) {
@@ -1774,34 +1798,12 @@ function everyMinute () {
 				saveFeedsInLists ();
 				flFeedsInListsDirty = false;
 				}
-			if (secondsSince (serverData.stats.whenLastBuild) >= (serverData.prefs.ctMinutesBetwBuilds * 60)) {
+			
+			if (secondsSince (whenLastRiversBuild) >= 59) { //8/6/14 by DW
 				loadListsFromFolder ();
 				flFeedsInListsDirty = true;
 				}
 			}
-		}
-	}
-function buildRiversArray () { //6/1/14 by DW
-	var riversArray = new Array ();
-	for (var i = 0; i < serverData.stats.listNames.length; i++) {
-		var obj = new Object (), rivername = stringPopLastField (serverData.stats.listNames [i], ".");
-		obj.url = "rivers/" + rivername + ".js"; //designed for an app running at the top level of the bucket
-		obj.title = rivername;
-		obj.longTitle =  rivername;
-		obj.description = "";
-		riversArray [i] = obj;
-		}
-	s3NewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
-		console.log ("buildRiversArray: " + s3RiversArrayPath);
-		});
-	}
-function buildAllRivers () {
-	for (var i = 0; i < serverData.stats.listNames.length; i++) { 
-		var listname = "\"" + serverData.stats.listNames [i] + "\"";
-		var flskip = serverData.prefs.flSkipDuplicateTitles;
-		var s = "buildOneRiver (" + listname + ", true, " + flskip + ", true);";
-		qAddTask (s);
-		
 		}
 	}
 function everyFiveMinutes () {

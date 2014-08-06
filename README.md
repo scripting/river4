@@ -79,6 +79,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.94 -- 8/6/14 by DW
+
+Fixed a problem that caused rivers to display only old stories. Full explanation on the <a href="http://river4.smallpict.com/2014/08/06/river4V094.html">blog</a>.
+
 ##### v0.93 -- 7/31/14 by DW
 
 Added more fields to the struct the /status call returns. It now says what the s3path is, what port the server is running on, and if you've defined a s3defaultAcl (see v0.91) what the value of that parameter is.

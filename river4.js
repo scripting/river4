@@ -1,4 +1,4 @@
-var myVersion = "0.93", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.95", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -11,6 +11,7 @@ var FeedParser = require ("feedparser");
 var request = require ("request");
 var urlpack = require ("url");
 var util = require ("util");
+var fs = require ("fs");
     
 var s3path = process.env.s3path; 
 var s3UserListsPath = s3path + "lists/"; //where users store their lists
@@ -223,6 +224,19 @@ function sameDay (d1, d2) {
 	d2 = new Date (d2);
 	return ((d1.getFullYear () == d2.getFullYear ()) && (d1.getMonth () == d2.getMonth ()) && (d1.getDate () == d2.getDate ()));
 	}
+function dayGreaterThanOrEqual (d1, d2) { //9/2/14 by DW
+	d1 = new Date (d1);
+	d1.setHours (0);
+	d1.setMinutes (0);
+	d1.setSeconds (0);
+	
+	d2 = new Date (d2);
+	d2.setHours (0);
+	d2.setMinutes (0);
+	d2.setSeconds (0);
+	
+	return (d1 >= d2);
+	}
 function stringLower (s) {
 	return (s.toLowerCase ());
 	}
@@ -241,6 +255,9 @@ function padWithZeros (num, ctplaces) {
 function getDatePath (theDate, flLastSeparator) {
 	if (theDate == undefined) {
 		theDate = new Date ();
+		}
+	else {
+		theDate = new Date (theDate); //8/12/14 by DW -- make sure it's a date type
 		}
 	if (flLastSeparator == undefined) {
 		flLastSeparator = true;
@@ -351,6 +368,9 @@ function trimWhitespace (s) { //rewrite -- 5/30/14 by DW
 				return (true);
 			}
 		return (false);
+		}
+	if (s == undefined) { //9/10/14 by DW
+		return ("");
 		}
 	while (isWhite (s.charAt (0))) {
 		s = s.substr (1);
@@ -632,7 +652,253 @@ function urlSplitter (url) { //7/15/14 by DW
 		};
 	return (splitUrl);
 	}
-
+function innerCaseName (text) { //8/12/14 by DW
+	var s = "", ch, flNextUpper = false;
+	text = stripMarkup (text); 
+	for (var i = 0; i < text.length; i++) {
+		ch = text [i];
+		if (isAlpha (ch) || isNumeric (ch)) { 
+			if (flNextUpper) {
+				ch = ch.toUpperCase ();
+				flNextUpper = false;
+				}
+			else {
+				ch = ch.toLowerCase ();
+				}
+			s += ch;
+			}
+		else {
+			if (ch == ' ') { 
+				flNextUpper = true;
+				}
+			}
+		}
+	return (s);
+	}
+function hitCounter (counterGroup, counterServer) { //8/12/14 by DW
+	var defaultCounterGroup = "scripting", defaultCounterServer = "http://counter.fargo.io/counter";
+	var thispageurl = location.href;
+	if (counterGroup == undefined) {
+		counterGroup = defaultCounterGroup;
+		}
+	if (counterServer == undefined) {
+		counterServer = defaultCounterServer;
+		}
+	if (thispageurl == undefined) {
+		thispageurl = "";
+		}
+	if (endsWith (thispageurl, "#")) {
+		thispageurl = thispageurl.substr (0, thispageurl.length - 1);
+		}
+	var jxhr = $.ajax ({
+		url: counterServer + "?group=" + encodeURIComponent (counterGroup) + "&referer=" + encodeURIComponent (document.referrer) + "&url=" + encodeURIComponent (thispageurl),
+		dataType: "jsonp",
+		jsonpCallback : "getData",
+		timeout: 30000
+		})
+	.success (function (data, status, xhr) {
+		console.log ("hitCounter: counter ping accepted by server.");
+		})
+	.error (function (status, textStatus, errorThrown) {
+		console.log ("hitCounter: counter ping error: " + textStatus);
+		});
+	}
+function stringMid (s, ix, len) { //8/12/14 by DW
+	return (s.substr (ix-1, len));
+	}
+function getCmdKeyPrefix () { //8/15/14 by DW
+	if (navigator.platform.toLowerCase ().substr (0, 3) == "mac") {
+		return ("&#8984;");
+		}
+	else {
+		return ("Ctrl+"); 
+		}
+	}
+function getRandomSnarkySlogan () { //8/15/14 by DW
+	var snarkySlogans = [
+		"Good for the environment.", 
+		"All baking done on premises.", 
+		"Still diggin!", 
+		"It's even worse than it appears.", 
+		"Ask not what the Internet can do for you...", 
+		"You should never argue with a crazy man.", 
+		"Welcome back my friends to the show that never ends.", 
+		"Greetings, citizen of Planet Earth. We are your overlords. :-)", 
+		"We don't need no stinkin rock stars.", 
+		"This aggression will not stand.", 
+		"Pay no attention to the man behind the curtain.", 
+		"Only steal from the best.", 
+		"Reallll soooon now...", 
+		"What a long strange trip it's been.", 
+		"Ask not what the Internet can do for you.", 
+		"When in doubt, blog.",
+		"Shut up and eat your vegetables.",
+		"Don't slam the door on the way out.",
+		"Yeah well, that's just, you know, like, your opinion, man.",
+		"So, it has come to this."
+		]
+	return (snarkySlogans [random (0, snarkySlogans.length - 1)]);
+	}
+function dayOfWeekToString (theDay) { //8/23/14 by DW
+	var weekday = [
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+		];
+	return (weekday[theDay]);
+	}
+function viewDate (when, flShortDayOfWeek)  {  //8/23/14 by DW
+	var now = new Date ();
+	when = new Date (when);
+	if (sameDay (when, now))  { 
+		return (timeString (when, false)) //2/9/13 by DW;
+		}
+	else  { 
+		var oneweek = 1000 * 60 * 60 * 24 * 7;
+		var cutoff = now - oneweek;
+		if (when > cutoff)   { //within the last week
+			var s = dayOfWeekToString (when.getDay ());
+			if (flShortDayOfWeek)  { 
+				s = s.substring (0, 3);
+				}
+			return (s);
+			}
+		else  { 
+			return (when.toLocaleDateString ());
+			}
+		}
+	}
+function timeString (when, flIncludeSeconds) { //8/26/14 by DW
+	var hour = when.getHours (), minutes = when.getMinutes (), ampm = "AM", s;
+	if (hour >= 12) {
+		ampm = "PM";
+		}
+	if (hour > 12) {
+		hour -= 12;
+		}
+	if (hour == 0) {
+		hour = 12;
+		}
+	if (minutes < 10) {
+		minutes = "0" + minutes;
+		}
+	if (flIncludeSeconds) { 
+		var seconds = when.getSeconds ();
+		if (seconds < 10) {
+			seconds = "0" + seconds;
+			}
+		s = hour + ":" + minutes + ":" + seconds + ampm;
+		}
+	else {
+		s = hour + ":" + minutes + ampm;
+		}
+	return (s);
+	}
+function stringLastField (s, chdelim) { //8/27/14 by DW
+	var ct = stringCountFields (s, chdelim);
+	if (ct == 0) { //8/31/14 by DW
+		return (s);
+		}
+	return (stringNthField (s, chdelim, ct));
+	}
+function maxLengthString (s, maxlength) { //8/27/14 by DW
+	if (s.length > maxlength) {
+		s = s.substr (0, maxlength);
+		while (true) {
+			var len = s.length; flbreak = false;
+			if (len == 0) {
+				break;
+				}
+			if (s [len - 1] == " ") {
+				flbreak = true;
+				}
+			s = s.substr (0, len - 1);
+			if (flbreak) {
+				break;
+				}
+			}
+		s = s + "...";
+		}
+	return (s);
+	}
+function formatDate (theDate, dateformat, timezone) { //8/28/14 by DW
+	if (theDate == undefined) {
+		theDate = new Date ();
+		}
+	if (dateformat == undefined) {
+		dateformat = "%c";
+		}
+	if (timezone == undefined) {
+		timezone =  - (new Date ().getTimezoneOffset () / 60);
+		}
+	try {
+		var offset = new Number (timezone);
+		var d = new Date (theDate);
+		var localTime = d.getTime ();
+		var localOffset = d.getTimezoneOffset () *  60000;
+		var utc = localTime + localOffset;
+		var newTime = utc + (3600000 * offset);
+		return (new Date (newTime).strftime (dateformat));
+		}
+	catch (tryerror) {
+		return (new Date (theDate).strftime (dateformat));
+		}
+	}
+function addPeriodToSentence (s) { //8/29/14 by DW
+	if (s.length > 0) {
+		var fladd = true;
+		var ch = s [s.length - 1];
+		switch (ch) {
+			case "!": case "?": case ":":
+				fladd = false;
+				break;
+			default:
+				if (endsWith (s, ".\"")) {
+					fladd = false;
+					}
+				else {
+					if (endsWith (s, ".'")) {
+						fladd = false;
+						}
+					}
+			}
+		if (fladd) {
+			s += ".";
+			}
+		}
+	return (s);
+	}
+function copyScalars (source, dest) { //8/31/14 by DW
+	for (var x in source) { 
+		var type, val = source [x];
+		if (val instanceof Date) { 
+			val = val.toString ();
+			}
+		type = typeof (val);
+		if ((type != "object") && (type != undefined)) {
+			dest [x] = val;
+			}
+		}
+	}
+function linkToDomainFromUrl (url, flshort) { //9/10/14 by DW
+	var splitUrl = urlSplitter (url), host = splitUrl.host.toLowerCase ();
+	if (flshort == undefined) {
+		flshort = false;
+		}
+	if (flshort) {
+		var splithost = host.split (".");
+		if (splithost.length == 3) {
+			host = splithost [1];
+			}
+		else {
+			host = splithost [0];
+			}
+		}
+	else {
+		if (beginsWith (host, "www.")) {
+			host = stringDelete (host, 1, 4);
+			}
+		}
+	return ("<a class=\"aLinkToDomainFromUrl\" href=\"" + url + "\" target=\"blank\">" + host + "</a>");
+	}
 
 var taskQ = []; 
 function qNotEmpty () {
@@ -860,6 +1126,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 	doOneDay (starttime);
 	
 	}
+
 
 
 
@@ -1903,6 +2170,19 @@ function startup () {
 												}
 											});
 										break;
+									
+									case "/ping": //9/11/14 by DW
+										var url = parsedUrl.query.url;
+										httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
+										if (findInFeedsArray (url) == undefined) {
+											httpResponse.end ("Ping received, but we're not following this feed. Sorry.");    
+											}
+										else {
+											httpResponse.end ("Ping received, will read asap.");    
+											readFeed (url);
+											}
+										break;
+									
 									default: //404 not found
 										httpResponse.writeHead (404, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 										httpResponse.end ("\"" + parsedUrl.pathname.toLowerCase () + "\" is not one of the endpoints defined by this server.");

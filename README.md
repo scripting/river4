@@ -79,6 +79,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.96 -- 9/24/14 by DW
+
+This version can be configured to store its data in the local filesystem instead of S3. See the <a href="http://river4.smallpict.com/2014/09/24/river4WorksWithLocalFilesystem.html">blog post</a> for details.
+
 ##### v0.95 -- 9/11/14 by DW
 
 New /ping endpoint, available to be called by a publisher, on behalf of a user, to indicate that a feed has updated, and should be read immediately. <a href="http://radio3.smallpict.com/2014/09/11/radio3053HasASimpleApi.html">Radio3</a> has this facility as of today, as does Fargo. 

@@ -1,4 +1,4 @@
-var myVersion = "0.95", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.96", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -12,18 +12,20 @@ var request = require ("request");
 var urlpack = require ("url");
 var util = require ("util");
 var fs = require ("fs");
+
+var fspath = process.env.fspath; //9/24/14 by DW
     
 var s3path = process.env.s3path; 
-var s3UserListsPath = s3path + "lists/"; //where users store their lists
-var s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
-var s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
-var s3FeedsArrayPath = s3path + "data/feedsStats.json";
-var s3RiversArrayPath = s3path + "data/riversArray.json";
-var s3FeedsInListsPath = s3path + "data/feedsInLists.json";
-var s3FeedsDataFolder = s3path + "data/feeds/";
-var s3CalendarDataFolder = s3path + "data/calendar/";
-var s3ListsDataFolder = s3path + "data/lists/";
-var s3IndexFile = s3path + "index.html";
+var s3UserListsPath; 
+var s3UserRiversPath; 
+var s3PrefsAndStatsPath;
+var s3FeedsArrayPath;
+var s3RiversArrayPath;
+var s3FeedsInListsPath;
+var s3FeedsDataFolder;
+var s3CalendarDataFolder;
+var s3ListsDataFolder;
+var s3IndexFile;
 
 var urlIndexSource = "http://fargo.io/code/river4/river4homepage.html";
 var urlDashboardSource = "http://fargo.io/code/river4/dashboard.html";
@@ -463,7 +465,7 @@ function bumpUrlString (s) { //5/10/14 by DW
 			}
 		else {
 			s = s.substr (0, s.length - 1);
-			s = bumpString (s) + "0";
+			s = bumpUrlString (s) + "0";
 			return (s);
 			}
 		}
@@ -964,7 +966,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 	function getRiverForDay (d, callback) {
 		var s3path = getCalendarPath (d);
 		if (flRunningOnServer) {
-			s3GetObject (s3path, function (error, data) {
+			stGetObject (s3path, function (error, data) {
 				if (error) {
 					callback (undefined);
 					}
@@ -1004,7 +1006,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 			}
 		if (flSave) {
 			var fname = stringPopLastField (listname, ".") + ".js";
-			s3NewObject (s3UserRiversPath + fname, jsontext, "application/json", s3defaultAcl, function (error, data) {
+			stNewObject (s3UserRiversPath + fname, jsontext, "application/json", s3defaultAcl, function (error, data) {
 				console.log ("buildOneRiver: " + s3UserRiversPath + fname + ".");
 				serverData.stats.ctRiverJsonSaves++;
 				serverData.stats.whenLastRiverJsonSave = starttime;
@@ -1127,8 +1129,128 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 	
 	}
 
+var fsStats = {
+	ctWrites: 0,
+	ctBytesWritten: 0,
+	ctWriteErrors: 0,
+	ctReads: 0,
+	ctBytesRead: 0,
+	ctReadErrors: 0
+	};
 
 
+
+function fsSureFilePath (path, callback) {
+	var splits = path.split ("/"), path = "";
+	if (splits.length > 2) {
+		function doLevel (levelnum) {
+			if (levelnum < (splits.length - 1)) {
+				path += splits [levelnum] + "/";
+				fs.exists (path, function (flExists) {
+					if (flExists) {
+						doLevel (levelnum + 1);
+						}
+					else {
+						fs.mkdir (path, undefined, function () {
+							doLevel (levelnum + 1);
+							});
+						}
+					});
+				}
+			else {
+				if (callback != undefined) {
+					callback ();
+					}
+				}
+			}
+		doLevel (0);
+		}
+	else {
+		if (callback != undefined) {
+			callback ();
+			}
+		}
+	}
+function fsNewObject (path, data, type, acl, callback, metadata) {
+	fsSureFilePath (path, function () {
+		fs.writeFile (path, data, function (err) {
+			var dataAboutWrite = {
+				};
+			if (err) {
+				console.log ("fsNewObject: error == " + jsonStringify (err));
+				fsStats.ctWriteErrors++;
+				if (callback != undefined) {
+					callback (err, dataAboutWrite);
+					}
+				}
+			else {
+				fsStats.ctWrites++;
+				fsStats.ctBytesWritten += data.length;
+				if (callback != undefined) {
+					callback (err, dataAboutWrite);
+					}
+				}
+			}); 
+		});
+	}
+function fsGetObject (path, callback) {
+	fs.readFile (path, "utf8", function (err, data) {
+		var dataAboutRead = {
+			Body: data
+			};
+		if (err) {
+			fsStats.ctReadErrors++;
+			}
+		else {
+			fsStats.ctReads++;
+			fsStats.ctBytesRead += dataAboutRead.Body.length;
+			}
+		callback (err, dataAboutRead);
+		});
+	}
+function fsListObjects (path, callback) {
+	fs.readdir (path, function (err, list) {
+		if (!endsWith (path, "/")) {
+			path += "/";
+			}
+		for (var i = 0; i < list.length; i++) {
+			var obj = {
+				s3path: path + list [i],
+				Size: 1
+				};
+			callback (obj);
+			}
+		callback ({flLastObject: true});
+		});
+	}
+ 
+
+
+//storage routines -- 9/24/14 by DW
+	function stNewObject (path, data, type, acl, callback, metadata) {
+		if (fspath != undefined) {
+			fsNewObject (path, data, type, acl, callback, metadata);
+			}
+		else {
+			s3NewObject (path, data, type, acl, callback, metadata);
+			}
+		}
+	function stGetObject (path, callback) {
+		if (fspath != undefined) {
+			fsGetObject (path, callback);
+			}
+		else {
+			s3GetObject (path, callback);
+			}
+		}
+	function stListObjects (path, callback) {
+		if (fspath != undefined) {
+			fsListObjects (path, callback);
+			}
+		else {
+			s3ListObjects (path, callback);
+			}
+		}
 
 function parseJson (jsontext, s3Path) {
 	var obj;
@@ -1157,7 +1279,7 @@ function countHttpSockets () {
 function loadTodaysRiver (callback) {
 	var s3path = getCalendarPath (dayRiverCovers);
 	console.log ("loadTodaysRiver: " + s3path);
-	s3GetObject (s3path, function (error, data) {
+	stGetObject (s3path, function (error, data) {
 		if (!error) {
 			todaysRiver = parseJson (data.Body, s3path);
 			}
@@ -1171,7 +1293,7 @@ function saveTodaysRiver (callback) {
 	
 	console.log ("saveTodaysRiver: " + getCalendarPath (dayRiverCovers));
 	
-	s3NewObject (getCalendarPath (dayRiverCovers), JSON.stringify (todaysRiver, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (getCalendarPath (dayRiverCovers), JSON.stringify (todaysRiver, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		serverData.stats.ctRiverSaves++;
 		serverData.stats.whenLastRiverSave = now;
 		if (!error) {
@@ -1294,7 +1416,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 
 function loadServerData (callback) {
 	console.log ("loadServerData: " + s3PrefsAndStatsPath);
-	s3GetObject (s3PrefsAndStatsPath, function (error, data) {
+	stGetObject (s3PrefsAndStatsPath, function (error, data) {
 		if (error) {
 			console.log ("loadServerData: error == " + error.message);
 			}
@@ -1354,7 +1476,7 @@ function updateStatsBeforeSave () {
 	}
 function saveServerData () {
 	updateStatsBeforeSave ();
-	s3NewObject (s3PrefsAndStatsPath, JSON.stringify (serverData, undefined, 4), "application/json", s3defaultAcl);
+	stNewObject (s3PrefsAndStatsPath, JSON.stringify (serverData, undefined, 4), "application/json", s3defaultAcl);
 	}
 
 function addToFeedsInLists (urlfeed) { //5/30/14 by DW
@@ -1366,7 +1488,7 @@ function addToFeedsInLists (urlfeed) { //5/30/14 by DW
 		}
 	}
 function saveFeedsInLists () { //5/30/14 by DW
-	s3NewObject (s3FeedsInListsPath, JSON.stringify (feedsInLists, undefined, 4), "application/json", s3defaultAcl);
+	stNewObject (s3FeedsInListsPath, JSON.stringify (feedsInLists, undefined, 4), "application/json", s3defaultAcl);
 	}
 function atLeastOneSubscriber (urlfeed) {
 	return (feedsInLists [urlfeed] != undefined);
@@ -1443,10 +1565,10 @@ function addToFeedsArray (urlfeed, obj, listname) {
 function saveFeedsArray () {
 	flFeedsArrayDirty = false;
 	console.log ("saveFeedsArray: " + s3FeedsArrayPath);
-	s3NewObject (s3FeedsArrayPath, JSON.stringify (feedsArray, undefined, 4), "application/json", s3defaultAcl);
+	stNewObject (s3FeedsArrayPath, JSON.stringify (feedsArray, undefined, 4), "application/json", s3defaultAcl);
 	}
 function loadFeedsArray (callback) {
-	s3GetObject (s3FeedsArrayPath, function (error, data) {
+	stGetObject (s3FeedsArrayPath, function (error, data) {
 		if (!error) {
 			feedsArray = parseJson (data.Body, s3FeedsArrayPath);
 			for (var i = 0; i < feedsArray.length; i++) {
@@ -1565,7 +1687,7 @@ function initFeed (urlfeed, callback, flwrite) {
 	if (flwrite == undefined) {
 		flwrite = false;
 		}
-	s3GetObject (infofilepath, function (error, data) {
+	stGetObject (infofilepath, function (error, data) {
 		if (error) {
 			obj = new Object ();
 			}
@@ -1682,7 +1804,7 @@ function initFeed (urlfeed, callback, flwrite) {
 			}
 		
 		if (flwrite) {
-			s3NewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+			stNewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 				secsLastInit = secondsSince (starttime);
 				});
 			}
@@ -1692,7 +1814,7 @@ function initFeed (urlfeed, callback, flwrite) {
 		});
 	}
 function saveFeed (feed) {
-	s3NewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		});
 	}
 function readFeed (urlfeed) {
@@ -1794,7 +1916,7 @@ function readFeed (urlfeed) {
 				
 				if (serverData.prefs.flWriteItemsToFiles) { //debugging
 					var path = feed.stats.s3FolderPath + "items/" + padWithZeros (ctitemsthisfeed++, 3) + ".json";
-					s3NewObject (path, JSON.stringify (item, undefined, 4), "application/json", s3defaultAcl);
+					stNewObject (path, JSON.stringify (item, undefined, 4), "application/json", s3defaultAcl);
 					}
 				});
 			feedparser.on ("end", function () {
@@ -1873,7 +1995,7 @@ function readOneList (listname, filepath) {
 		});
 	opmlparser.on ("end", function () {
 		});
-	s3GetObject (filepath, function (error, data) {
+	stGetObject (filepath, function (error, data) {
 		if (error) {
 			console.log ("readOneList: error == " + error.message);
 			}
@@ -1888,7 +2010,7 @@ function initList (name, callback) {
 		foldername = stringDelete (foldername, foldername.length - 4, 5);
 		}
 	infofilepath = s3ListsDataFolder + foldername + "/listInfo.json";
-	s3GetObject (infofilepath, function (error, data) {
+	stGetObject (infofilepath, function (error, data) {
 		if (error) {
 			obj = new Object ();
 			}
@@ -1944,7 +2066,7 @@ function initList (name, callback) {
 			callback (obj);
 			}
 		
-		s3NewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+		stNewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 			});
 		});
 	}
@@ -1957,7 +2079,7 @@ function loadListsFromFolder () {
 	serverData.stats.whenLastListFolderRead = now;
 	serverData.stats.listNames = new Array ();
 	feedsInLists = new Object ();
-	s3ListObjects (s3UserListsPath, function (obj) { //read user's list files
+	stListObjects (s3UserListsPath, function (obj) { //read user's list files
 		if (obj.flLastObject != undefined) {
 			}
 		else {
@@ -1979,11 +2101,11 @@ function applyPrefs () {
 	}
 function copyIndexFile () { //6/1/14 by DW
 	if (serverData.prefs.enabled) {
-		s3GetObject (s3IndexFile, function (error, data) {
+		stGetObject (s3IndexFile, function (error, data) {
 			if (error) {
 				request (urlIndexSource, function (error, response, htmltext) {
 					if (!error && response.statusCode == 200) {
-						s3NewObject (s3IndexFile, htmltext, "text/html", s3defaultAcl, function (error, data) {
+						stNewObject (s3IndexFile, htmltext, "text/html", s3defaultAcl, function (error, data) {
 							console.log ("copyIndexFile: " + s3IndexFile);
 							});
 						}
@@ -2002,7 +2124,7 @@ function buildRiversArray () { //6/1/14 by DW -- build a data structure used by 
 		obj.description = "";
 		riversArray [i] = obj;
 		}
-	s3NewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		console.log ("buildRiversArray: " + s3RiversArrayPath);
 		});
 	}
@@ -2088,6 +2210,23 @@ function startup () {
 	console.log (""); console.log (""); console.log (""); 
 	console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
 	console.log (""); 
+	
+	if (fspath != undefined) { //9/24/14 by DW
+		console.log ("Running from the filesystem: " + fspath);
+		console.log (""); 
+		s3path = fspath; 
+		}
+	s3UserListsPath = s3path + "lists/"; //where users store their lists
+	s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
+	s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
+	s3FeedsArrayPath = s3path + "data/feedsStats.json";
+	s3RiversArrayPath = s3path + "data/riversArray.json";
+	s3FeedsInListsPath = s3path + "data/feedsInLists.json";
+	s3FeedsDataFolder = s3path + "data/feeds/";
+	s3CalendarDataFolder = s3path + "data/calendar/";
+	s3ListsDataFolder = s3path + "data/lists/";
+	s3IndexFile = s3path + "index.html";
+	
 	
 	loadServerData (function () {
 		applyPrefs ();

@@ -79,6 +79,11 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.97 -- 10/16/14 by DW
+
+Apparently there was a change in format in the FeedParser module, in the way it represents &lt;source:outline> elements. This release handles the change in format so outlines now pass through in a way that's understandable to the RiverBrowser software.
+
+
 ##### v0.96 -- 9/24/14 by DW
 
 This version can be configured to store its data in the local filesystem instead of S3. See the <a href="http://river4.smallpict.com/2014/09/24/river4WorksWithLocalFilesystem.html">blog post</a> for details.

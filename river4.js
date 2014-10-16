@@ -1,4 +1,4 @@
-var myVersion = "0.96", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.97", myProductName = "River4", flRunningOnServer = true;
 
 
 var http = require ("http"); 
@@ -880,7 +880,7 @@ function copyScalars (source, dest) { //8/31/14 by DW
 			}
 		}
 	}
-function linkToDomainFromUrl (url, flshort) { //9/10/14 by DW
+function linkToDomainFromUrl (url, flshort, maxlength) { //10/10/14 by DW
 	var splitUrl = urlSplitter (url), host = splitUrl.host.toLowerCase ();
 	if (flshort == undefined) {
 		flshort = false;
@@ -899,7 +899,24 @@ function linkToDomainFromUrl (url, flshort) { //9/10/14 by DW
 			host = stringDelete (host, 1, 4);
 			}
 		}
+	
+	if (maxlength != undefined) { //10/10/14; 10:46:56 PM by DW
+		if (host.length > maxlength) {
+			host = stringMid (host, 1, maxlength) + "...";
+			}
+		}
+	
 	return ("<a class=\"aLinkToDomainFromUrl\" href=\"" + url + "\" target=\"blank\">" + host + "</a>");
+	}
+function getRandomPassword (ctchars) { //10/14/14 by DW
+	var s= "", ch;
+	while (s.length < ctchars)  {
+		ch = String.fromCharCode (random (33, 122));
+		if (isAlpha (ch) || isNumeric (ch)) {
+			s += ch;
+			}
+		}
+	return (s.toLowerCase ());
 	}
 
 var taskQ = []; 
@@ -1356,6 +1373,27 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 				}
 			return (theNewOutline);
 			}
+		function newConvertOutline (jstruct) { //10/16/14 by DW
+			var theNewOutline = {};
+			if (jstruct ["@"] != undefined) {
+				copyScalars (jstruct ["@"], theNewOutline);
+				}
+			if (jstruct ["source:outline"] != undefined) {
+				if (jstruct ["source:outline"] instanceof Array) {
+					var theArray = jstruct ["source:outline"];
+					theNewOutline.subs = [];
+					for (var i = 0; i < theArray.length; i++) {
+						theNewOutline.subs [theNewOutline.subs.length] = newConvertOutline (theArray [i]);
+						}
+					}
+				else {
+					theNewOutline.subs = [
+						newConvertOutline (jstruct ["source:outline"])
+						];
+					}
+				}
+			return (theNewOutline);
+			}
 		function getString (s) {
 			if (s == null) {
 				s = "";
@@ -1390,7 +1428,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 				}
 		//source:outline -- 7/16/14 by DW
 			if (itemFromParser ["source:outline"] != undefined) { //they're using a cool feature! :-)
-				item.outline = convertOutline (itemFromParser ["source:outline"]);
+				item.outline = newConvertOutline (itemFromParser ["source:outline"]);
 				console.log ("addToRiver: outline == " + JSON.stringify (item.outline, undefined, 4)); 
 				}
 		item.pubdate = getDate (itemFromParser.pubDate);

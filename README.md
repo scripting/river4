@@ -1,7 +1,7 @@
 river4
 ======
 
-River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">river-of-news</a> aggregator that stores its lists and data in Amazon S3.
+River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">river-of-news</a> aggregator that stores its lists and data in the local file system or Amazon S3.
 
 ####Overview
 
@@ -9,41 +9,16 @@ We have a <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">
 
 If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">support mail list</a>, with people who have successfully set up and are running River4 installations. If you're having trouble, this is the place to go.
 
-If you're ready to install the software, you've come to the right place! :-)
+####Installing the software
 
-#### What you'll need
+There are two howto's:
 
-1. A node.js installation.
+1. Setting up River4 <a href="http://river4.smallpict.com/2014/09/25/bareBonesRiver4Howto.html">using the local file system</a> for storage.
 
-2. An Amazon account, and an S3 bucket to store the JSON files, and a small HTML file.
+2. Or, <a href="http://river4.smallpict.com/2014/10/17/usingRiver4WithS3Storage.html">using Amazon S3</a> for storage.
 
-3. One or more OPML subscription list files.
+The first option is easier, and often less expensive. However, if you're running River4 on a service like Heroku, you can't rely on the local file system for persistent storage, so we built River4 to work with S3 as well. On Heroku, which runs in the Amazon cloud, access to S3 storage is free.
 
-#### How to install
-
-1. Create an S3 bucket to hold all your subscription lists, rivers, and data for the aggregator. 
-
-2. On the node.js system, set an environment variable, s3path, to contain the path to the bucket created in step 1.
-
-   <code>export s3path=/river.mydomain.com/</code>
-
-3. Again, on the node.js system, set the two AWS environment variables. This allows the River4 app to write to your bucket.
-
-   <code>export AWS_ACCESS_KEY_ID=12345</code>
-
-   <code>export AWS_SECRET_ACCESS_KEY=TUVWXYZ</code>
-
-4. Launch river4.js on a node.js system. Suppose that server is aggregator.mydomain.com.
-
-5. Look in the bucket. You should see a data folder, with a single file in it containing the default value of prefs and stats for the app. There's also an index.html file, which will display your rivers in a simple way, providing code you can crib to create your own way of browsing (room for improvement here, for sure).
-
-6. Create a folder at the top level of the bucket called "lists". Save one or more OPML subscription lists into that folder.
-
-7. After a while you should see a new folder called "rivers" created automatically by the software. In that folder you should see one JSON file for each list. It contains the news from those feeds, discovered by River4. This format is designed to plug into the beautfiul" river displayer. 
-
-8. If you want to watch the progress of the aggregator, you can view this page. 
-
-    <code>http://aggregator.mydomain.com/serverdata</code>
 
 #### Notes
 

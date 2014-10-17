@@ -26,8 +26,6 @@ The first option is easier, and often less expensive. However, if you're running
 
 2. The first released version is 0.79. They will increment by one one-hundredth every release. At some point I'll call it 1.0, then subsequent releases will be 1.01, 1.02 etc.
 
-3. When you set up your S3 bucket, make sure that web hosting is enabled and index.html is the name of your index file. Here's a <a href="http://static.scripting.com/larryKing/images/2014/06/01/bucketSetup.gif">screen shot</a> that shows how to set it up. 
-
 #### Links
 
 1. <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">What is a River of News aggregator?</a>

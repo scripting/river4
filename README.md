@@ -52,6 +52,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.99 -- 11/1/14 by DW
+
+Two fixes for local file system use. 1. Only read lists whose names end with .opml -- there were invisible files on the Mac that would cause problems. 2. When running on Windows and writing to the local file system, there are more illegal characters. Replace them with underscores.
+
 ##### v0.97 -- 10/16/14 by DW
 
 Apparently there was a change in format in the FeedParser module, in the way it represents &lt;source:outline> elements. This release handles the change in format so outlines now pass through in a way that's understandable to the RiverBrowser software.

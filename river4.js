@@ -1,5 +1,5 @@
-var myVersion = "0.97", myProductName = "River4", flRunningOnServer = true;
-
+var myVersion = "0.99", myProductName = "River4", flRunningOnServer = true;
+ 
 
 var http = require ("http"); 
 var https = require ("https");
@@ -556,6 +556,28 @@ function readHttpFile (url, callback) { //5/27/14 by DW
 	.error (function (status) { 
 		console.log ("readHttpFile: url == " + url + ", error == " + status.statusText + ".");
 		callback (undefined);
+		});
+	}
+function readHttpFileThruProxy (url, type, callback) { //10/25/14 by DW
+	var urlReadFileApi = "http://pub.fargo.io/httpReadUrl";
+	if (type == undefined) {
+		type = "text/plain";
+		}
+	var jxhr = $.ajax ({ 
+		url: urlReadFileApi + "?url=" + encodeURIComponent (url) + "&type=" + encodeURIComponent (type),
+		dataType: "text" , 
+		timeout: 30000 
+		}) 
+	.success (function (data, status) { 
+		if (callback != undefined) {
+			callback (data);
+			}
+		}) 
+	.error (function (status) { 
+		console.log ("readHttpFileThruProxy: url == " + url + ", error == " + status.statusText + ".");
+		if (callback != undefined) {
+			callback (undefined);
+			}
 		});
 	}
 function stringPopLastField (s, chdelim) { //5/28/14 by DW
@@ -1429,7 +1451,6 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		//source:outline -- 7/16/14 by DW
 			if (itemFromParser ["source:outline"] != undefined) { //they're using a cool feature! :-)
 				item.outline = newConvertOutline (itemFromParser ["source:outline"]);
-				console.log ("addToRiver: outline == " + JSON.stringify (item.outline, undefined, 4)); 
 				}
 		item.pubdate = getDate (itemFromParser.pubDate);
 		item.comments = getString (itemFromParser.comments);
@@ -1704,6 +1725,29 @@ function getItemGuid (item) {
 	return (guid);
 	}
 function initFeed (urlfeed, callback, flwrite) {
+	function cleanFilenameForPlatform (s) { //11/1/14 by DW
+		var flprocessed = false;
+		if (fspath != undefined) { //we're running on the local file system
+			switch (process.platform) { //11/1/14 by DW
+				case "win32":
+					s = replaceAll (s, "/", "_");
+					s = replaceAll (s, "?", "_");
+					s = replaceAll (s, ":", "_");
+					s = replaceAll (s, "<", "_");
+					s = replaceAll (s, ">", "_");
+					s = replaceAll (s, "\"", "_");
+					s = replaceAll (s, "\\", "_");
+					s = replaceAll (s, "|", "_");
+					s = replaceAll (s, "*", "_");
+					flprocessed = true;
+					break;
+				}
+			}
+		if (!flprocessed) {
+			s = replaceAll (s, "/", ":");
+			}
+		return (s);
+		}
 	function getFolderPath (urlfeed) { //return path to S3 folder for this feed
 		var s = urlfeed;
 		if (beginsWith (s, "http://")) {
@@ -1714,9 +1758,7 @@ function initFeed (urlfeed, callback, flwrite) {
 				s = stringDelete (s, 1, 8);
 				}
 			}
-		
-		s = replaceAll (s, "/", ":");
-		
+		cleanFilenameForPlatform (s); //11/1/14 by DW
 		s = s3FeedsDataFolder + s + "/";
 		return (s);
 		}
@@ -1874,7 +1916,7 @@ function readFeed (urlfeed) {
 				feedstats.ctReads++;
 				feedstats.whenLastRead = starttime;
 				
-				console.log ("readFeed: urlfeed == " + urlfeed);
+				console.log ("readFeed: " + urlfeed);
 				
 				flFeedsArrayDirty = true;
 			serverData.stats.ctActiveThreads++;
@@ -2124,10 +2166,12 @@ function loadListsFromFolder () {
 			if (obj.Size > 0) { //it's a file
 				var filepath = obj.s3path;
 				var listname = stringNthField (filepath, "/", stringCountFields (filepath, "/")); //something like myList.opml
-				serverData.stats.listNames [serverData.stats.listNames.length] = listname; //5/28/14 by DW
-				initList (listname, function () {
-					qAddTask ("readOneList (\"" + listname + "\", \"" + filepath + "\")");
-					});
+				if (endsWith (listname, ".opml")) { //11/1/14 by DW
+					serverData.stats.listNames [serverData.stats.listNames.length] = listname; //5/28/14 by DW
+					initList (listname, function () {
+						qAddTask ("readOneList (\"" + listname + "\", \"" + filepath + "\")");
+						});
+					}
 				}
 			}
 		});

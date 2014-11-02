@@ -1,4 +1,4 @@
-var myVersion = "0.99", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.100", myProductName = "River4", flRunningOnServer = true;
  
 
 var http = require ("http"); 
@@ -1758,7 +1758,7 @@ function initFeed (urlfeed, callback, flwrite) {
 				s = stringDelete (s, 1, 8);
 				}
 			}
-		cleanFilenameForPlatform (s); //11/1/14 by DW
+		s = cleanFilenameForPlatform (s); //11/1/14 by DW
 		s = s3FeedsDataFolder + s + "/";
 		return (s);
 		}

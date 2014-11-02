@@ -52,6 +52,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.100 -- 11/2/14 by DW
+
+Fixed a <a href="https://groups.google.com/forum/?fromgroups#!topic/river4/vBU14ymOoaQ">bug</a> in file name processing.
+
 ##### v0.99 -- 11/1/14 by DW
 
 Two fixes for local file system use. 1. Only read lists whose names end with .opml -- there were invisible files on the Mac that would cause problems. 2. When running on Windows and writing to the local file system, there are more illegal characters. Replace them with underscores.

@@ -44,6 +44,8 @@ The first option is easier, and often less expensive. However, if you're running
 
 8. Chris Dadswell wrote a <a href="http://scriven.chrisdadswell.co.uk/users/scriven/articles/howToSetupAFargoRiverOfNews.html">tutorial</a> for setting up your own River4 installation. 
 
+9. The <a href="http://river4.smallpict.com/2014/10/05/theHelloWorldOfRivers.html">Hello World</a> of Rivers.
+
 #### Thanks!
 
 Thanks to two developer friends, Dan MacTough and Eric Kidd, who helped this Node.js newbie get this app up and running. 

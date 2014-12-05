@@ -54,6 +54,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.108 -- 12/5/14 by DW
+
+There's now a River4 Console app, at http://river4.io/ that allows you to edit subscription lists in an outliner, and set some of the server preferences remotely. It's documented on the <a href="http://river4.smallpict.com/2014/12/05/newRiver4NewDashboardApp.html">River4 blog</a>. 
+
 ##### v0.100 -- 11/2/14 by DW
 
 Fixed a <a href="https://groups.google.com/forum/?fromgroups#!topic/river4/vBU14ymOoaQ">bug</a> in file name processing.

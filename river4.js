@@ -1,7 +1,7 @@
-var myVersion = "0.108", myProductName = "River4", flRunningOnServer = true;
+var myVersion = "0.109", myProductName = "River4", flRunningOnServer = true; 
  
 
-var http = require ("http");
+var http = require ("http"); 
 var https = require ("https");
 var AWS = require ("aws-sdk");
 var s3 = new AWS.S3 ();
@@ -125,10 +125,10 @@ function s3SplitPath (path) { //split path like this: /tmp.scripting.com/testing
 	}
 function s3NewObject (path, data, type, acl, callback, metadata) {
 	var splitpath = s3SplitPath (path);
-	if (type == undefined) {
+	if (type === undefined) {
 		type = s3defaultType;
 		}
-	if (acl == undefined) {
+	if (acl === undefined) {
 		acl = s3defaultAcl;
 		}
 	var params = {
@@ -166,10 +166,10 @@ function s3Redirect (path, url) { //1/30/14 by DW -- doesn't appear to work -- d
 		};
 	s3.putObject (params, function (err, data) { 
 		if (err != null) {
-			consoleLog ("s3Redirect: err.message = " + err.message + ".");
+			console.log ("s3Redirect: err.message = " + err.message + ".");
 			}
 		else {
-			consoleLog ("s3Redirect: path = " + path + ", url = " + url + ", data = ", JSON.stringify (data));
+			console.log ("s3Redirect: path = " + path + ", url = " + url + ", data = ", JSON.stringify (data));
 			}
 		});
 	}
@@ -247,6 +247,10 @@ function dayGreaterThanOrEqual (d1, d2) { //9/2/14 by DW
 	return (d1 >= d2);
 	}
 function stringLower (s) {
+	if (s === undefined) { //1/26/15 by DW
+		return ("");
+		}
+	s = s.toString (); //1/26/15 by DW
 	return (s.toLowerCase ());
 	}
 function secondsSince (when) { 
@@ -262,13 +266,13 @@ function padWithZeros (num, ctplaces) {
 	return (s);
 	}
 function getDatePath (theDate, flLastSeparator) {
-	if (theDate == undefined) {
+	if (theDate === undefined) {
 		theDate = new Date ();
 		}
 	else {
 		theDate = new Date (theDate); //8/12/14 by DW -- make sure it's a date type
 		}
-	if (flLastSeparator == undefined) {
+	if (flLastSeparator === undefined) {
 		flLastSeparator = true;
 		}
 	
@@ -306,11 +310,11 @@ function multipleReplaceAll (s, adrTable, flCaseSensitive, startCharacters, endC
 	return s;
 	}
 function endsWith (s, possibleEnding, flUnicase) {
-	if ((s == undefined) || (s.length == 0)) { 
+	if ((s === undefined) || (s.length == 0)) { 
 		return (false);
 		}
 	var ixstring = s.length - 1;
-	if (flUnicase == undefined) {
+	if (flUnicase === undefined) {
 		flUnicase = true;
 		}
 	if (flUnicase) {
@@ -330,7 +334,7 @@ function endsWith (s, possibleEnding, flUnicase) {
 	return (true);
 	}
 function stringContains (s, whatItMightContain, flUnicase) { //11/9/14 by DW
-	if (flUnicase == undefined) {
+	if (flUnicase === undefined) {
 		flUnicase = true;
 		}
 	if (flUnicase) {
@@ -343,7 +347,7 @@ function beginsWith (s, possibleBeginning, flUnicase) {
 	if (s.length == 0) { //1/1/14 by DW
 		return (false);
 		}
-	if (flUnicase == undefined) {
+	if (flUnicase === undefined) {
 		flUnicase = true;
 		}
 	if (flUnicase) {
@@ -388,7 +392,7 @@ function trimWhitespace (s) { //rewrite -- 5/30/14 by DW
 			}
 		return (false);
 		}
-	if (s == undefined) { //9/10/14 by DW
+	if (s === undefined) { //9/10/14 by DW
 		return ("");
 		}
 	while (isWhite (s.charAt (0))) {
@@ -436,7 +440,6 @@ function getBoolean (val) { //12/5/13 by DW
 			break;
 		case "boolean":
 			return (val);
-			break;
 		case "number":
 			if (val == 1) {
 				return (true);
@@ -446,7 +449,7 @@ function getBoolean (val) { //12/5/13 by DW
 	return (false);
 	}
 function bumpUrlString (s) { //5/10/14 by DW
-	if (s == undefined) {
+	if (s === undefined) {
 		s = "0";
 		}
 	function bumpChar (ch) {
@@ -529,10 +532,10 @@ function stripMarkup (s) { //5/24/14 by DW
 	return (s.replace (/(<([^>]+)>)/ig, ""));
 	}
 function maxStringLength (s, len, flWholeWordAtEnd, flAddElipses) {
-	if (flWholeWordAtEnd == undefined) {
+	if (flWholeWordAtEnd === undefined) {
 		flWholeWordAtEnd = true;
 		}
-	if (flAddElipses == undefined) { //6/2/14 by DW
+	if (flAddElipses === undefined) { //6/2/14 by DW
 		flAddElipses = true;
 		}
 	if (s.length > len) {
@@ -561,11 +564,14 @@ function removeMultipleBlanks (s) { //7/30/14 by DW
 function stringAddCommas (x) { //5/27/14 by DW
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}
-function readHttpFile (url, callback) { //5/27/14 by DW
+function readHttpFile (url, callback, timeoutInMilliseconds) { //5/27/14 by DW
+	if (timeoutInMilliseconds === undefined) {
+		timeoutInMilliseconds = 30000;
+		}
 	var jxhr = $.ajax ({ 
 		url: url,
 		dataType: "text" , 
-		timeout: 30000 
+		timeout: timeoutInMilliseconds 
 		}) 
 	.success (function (data, status) { 
 		callback (data);
@@ -577,7 +583,7 @@ function readHttpFile (url, callback) { //5/27/14 by DW
 	}
 function readHttpFileThruProxy (url, type, callback) { //10/25/14 by DW
 	var urlReadFileApi = "http://pub.fargo.io/httpReadUrl";
-	if (type == undefined) {
+	if (type === undefined) {
 		type = "text/plain";
 		}
 	var jxhr = $.ajax ({ 
@@ -638,7 +644,7 @@ function decodeXml (s) { //11/7/14 by DW
 	}
 function hotUpText (s, url) { //7/18/14 by DW
 	
-	if (url == undefined) { //makes it easier to call -- 3/14/14 by DW
+	if (url === undefined) { //makes it easier to call -- 3/14/14 by DW
 		return (s);
 		}
 	
@@ -663,11 +669,11 @@ function hotUpText (s, url) { //7/18/14 by DW
 	}
 function getFavicon (url) { //7/18/14 by DW
 	function getDomain (url) {
-		if (( url != null ) && (url != "")) {
+		if ((url != null ) && (url != "")) {
 			url = url.replace("www.","").replace("www2.", "").replace("feedproxy.", "").replace("feeds.", "");
 			var root = url.split('?')[0]; // cleans urls of form http://domain.com?a=1&b=2
 			var url = root.split('/')[2];
-		}
+			}
 		return (url);
 		};
 	var domain = getDomain (url);
@@ -722,13 +728,13 @@ function innerCaseName (text) { //8/12/14 by DW
 function hitCounter (counterGroup, counterServer) { //8/12/14 by DW
 	var defaultCounterGroup = "scripting", defaultCounterServer = "http://counter.fargo.io/counter";
 	var thispageurl = location.href;
-	if (counterGroup == undefined) {
+	if (counterGroup === undefined) {
 		counterGroup = defaultCounterGroup;
 		}
-	if (counterServer == undefined) {
+	if (counterServer === undefined) {
 		counterServer = defaultCounterServer;
 		}
-	if (thispageurl == undefined) {
+	if (thispageurl === undefined) {
 		thispageurl = "";
 		}
 	if (endsWith (thispageurl, "#")) {
@@ -741,7 +747,7 @@ function hitCounter (counterGroup, counterServer) { //8/12/14 by DW
 		timeout: 30000
 		})
 	.success (function (data, status, xhr) {
-		console.log ("hitCounter: counter ping accepted by server.");
+		console.log ("hitCounter: counter ping accepted by server, group == " + counterGroup + ", page url == " + thispageurl);
 		})
 	.error (function (status, textStatus, errorThrown) {
 		console.log ("hitCounter: counter ping error: " + textStatus);
@@ -864,13 +870,13 @@ function maxLengthString (s, maxlength) { //8/27/14 by DW
 	return (s);
 	}
 function formatDate (theDate, dateformat, timezone) { //8/28/14 by DW
-	if (theDate == undefined) {
+	if (theDate === undefined) {
 		theDate = new Date ();
 		}
-	if (dateformat == undefined) {
+	if (dateformat === undefined) {
 		dateformat = "%c";
 		}
-	if (timezone == undefined) {
+	if (timezone === undefined) {
 		timezone =  - (new Date ().getTimezoneOffset () / 60);
 		}
 	try {
@@ -924,7 +930,7 @@ function copyScalars (source, dest) { //8/31/14 by DW
 	}
 function linkToDomainFromUrl (url, flshort, maxlength) { //10/10/14 by DW
 	var splitUrl = urlSplitter (url), host = splitUrl.host.toLowerCase ();
-	if (flshort == undefined) {
+	if (flshort === undefined) {
 		flshort = false;
 		}
 	if (flshort) {
@@ -964,7 +970,7 @@ function monthToString (theMonthNum) { //11/4/14 by DW
 	
 	
 	var theDate;
-	if (theMonthNum == undefined) {
+	if (theMonthNum === undefined) {
 		theDate = new Date ();
 		}
 	else {
@@ -1012,6 +1018,111 @@ function scheduleNextRun (callback, ctMillisecsBetwRuns) { //11/27/14 by DW
 function urlEncode (s) { //12/4/14 by DW
 	return (encodeURIComponent (s));
 	}
+function popTweetNameAtStart (s) { //12/8/14 by DW
+	var ch;
+	s = trimWhitespace (s);
+	if (s.length > 0) {
+		if (s.charAt (0) == "@") {
+			while (s.charAt (0) != " ") {
+				s = s.substr (1)
+				}
+			while (s.length > 0) {
+				ch = s.charAt (0);
+				if ((ch != " ") && (ch != "-")) {
+					break;
+					}
+				s = s.substr (1)
+				}
+			}
+		}
+	return (s);
+	}
+function httpHeadRequest (url, callback) { //12/17/14 by DW
+	var jxhr = $.ajax ({
+		url: url,
+		type: "HEAD",
+		dataType: "text",
+		timeout: 30000
+		})
+	.success (function (data, status, xhr) {
+		callback (xhr); //you can do xhr.getResponseHeader to get one of the header elements
+		})
+	}
+function httpExt2MIME (ext) { //12/24/14 by DW
+	var lowerext = stringLower (ext);
+	var map = {
+		"au": "audio/basic",
+		"avi": "application/x-msvideo",
+		"bin": "application/x-macbinary",
+		"css": "text/css",
+		"dcr": "application/x-director",
+		"dir": "application/x-director",
+		"dll": "application/octet-stream",
+		"doc": "application/msword",
+		"dtd": "text/dtd",
+		"dxr": "application/x-director",
+		"exe": "application/octet-stream",
+		"fatp": "text/html",
+		"ftsc": "text/html",
+		"fttb": "text/html",
+		"gif": "image/gif",
+		"gz": "application/x-gzip",
+		"hqx": "application/mac-binhex40",
+		"htm": "text/html",
+		"html": "text/html",
+		"jpeg": "image/jpeg",
+		"jpg": "image/jpeg",
+		"js": "application/javascript",
+		"mid": "audio/x-midi",
+		"midi": "audio/x-midi",
+		"mov": "video/quicktime",
+		"mp3": "audio/mpeg",
+		"pdf": "application/pdf",
+		"png": "image/png",
+		"ppt": "application/mspowerpoint",
+		"ps": "application/postscript",
+		"ra": "audio/x-pn-realaudio",
+		"ram": "audio/x-pn-realaudio",
+		"sit": "application/x-stuffit",
+		"sys": "application/octet-stream",
+		"tar": "application/x-tar",
+		"text": "text/plain",
+		"txt": "text/plain",
+		"wav": "audio/x-wav",
+		"wrl": "x-world/x-vrml",
+		"xml": "text/xml",
+		"zip": "application/zip"
+		};
+	for (x in map) {
+		if (stringLower (x) == lowerext) {
+			return (map [x]);
+			}
+		}
+	return ("text/plain");
+	}
+function kilobyteString (num) { //1/24/15 by DW
+	num = Number (num) / 1024;
+	return (num.toFixed (2) + "K");
+	}
+function megabyteString (num) { //1/24/15 by DW
+	var onemeg = 1024 * 1024;
+	if (num <= onemeg) {
+		return (kilobyteString (num));
+		}
+	num = Number (num) / onemeg;
+	return (num.toFixed (2) + "MB");
+	}
+function gigabyteString (num) { //1/24/15 by DW
+	var onegig = 1024 * 1024 * 1024;
+	if (num <= onegig) {
+		return (megabyteString (num));
+		}
+	num = Number (num) / onegig;
+	return (num.toFixed (2) + "GB");
+	}
+function dateToNumber (theDate) { //2/15/15 by DW
+	return (Number (new Date (theDate)));
+	}
 
 var taskQ = []; 
 function qNotEmpty () {
@@ -1021,10 +1132,10 @@ function qSize () {
 	return (taskQ.length);
 	}
 function qAddTask (taskcode, taskdata) { //add task at end of array
-	if (taskcode == undefined) {
+	if (taskcode === undefined) {
 		taskcode = "";
 		}
-	if (taskdata == undefined) {
+	if (taskdata === undefined) {
 		taskdata = {};
 		}
 	taskQ [taskQ.length] = {
@@ -1251,8 +1362,9 @@ var fsStats = {
 
 
 
-function fsSureFilePath (path, callback) {
-	var splits = path.split ("/"), path = "";
+function fsSureFilePath (path, callback) { 
+	var splits = path.split ("/");
+	path = ""; //1/8/15 by DW
 	if (splits.length > 0) {
 		function doLevel (levelnum) {
 			if (levelnum < (splits.length - 1)) {
@@ -1412,16 +1524,16 @@ function loadTodaysRiver (callback) {
 	}
 function saveTodaysRiver (callback) {
 	var now = new Date ();
-	
 	console.log ("saveTodaysRiver: " + getCalendarPath (dayRiverCovers));
-	
 	stNewObject (getCalendarPath (dayRiverCovers), JSON.stringify (todaysRiver, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
 		serverData.stats.ctRiverSaves++;
 		serverData.stats.whenLastRiverSave = now;
-		if (!error) {
-			flRiverDirty = false;
+		if (error) { //4/21/15 by DW -- we were counting errors incorrectly
 			serverData.stats.ctRiverSaveErrors++;
 			serverData.stats.whenLastRiverSaveError = now;
+			}
+		else {
+			flRiverDirty = false;
 			}
 		if (callback != undefined) {
 			callback ();
@@ -1430,13 +1542,19 @@ function saveTodaysRiver (callback) {
 	}
 function checkRiverRollover () { 
 	var now = new Date ();
-	if (!sameDay (now, dayRiverCovers)) { //rollover
-		if (flRiverDirty) {
-			saveTodaysRiver ();
-			}
+	function roll () {
 		todaysRiver = new Array (); //clear it out
 		dayRiverCovers = now;
 		serverData.stats.ctHitsToday = 0;
+		saveTodaysRiver (); //4/21/15 by DW -- initialize empty river
+		}
+	if (!sameDay (now, dayRiverCovers)) { //rollover
+		if (flRiverDirty) {
+			saveTodaysRiver (roll);
+			}
+		else {
+			roll ();
+			}
 		}
 	}
 function addToRiver (urlfeed, itemFromParser, callback) {

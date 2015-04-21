@@ -56,7 +56,11 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 ##### v0.109 -- 4/21/15 by DW
 
-Fixed a bug that would cause generated rivers to be empty immediately after date rollover. The fix was to write out an empty array in the calendar structure when the date rollover occurs. The problem was that until there was a new item saved for the day, the first read of the calendar, when building a river would fail, causing the build to finish. The problem was discovered in <a href="http://podcatch.com/">podcatch.com</a>, and written up on the <a href="http://river4.smallpict.com/2015/04/21/foundASeriousRiver4Problem.html">River4 blog</a>.
+Fixed a bug that would cause generated rivers to be empty immediately after date rollover. 
+
+The fix was to write out an empty array in the calendar structure when the date rollover occurs. The problem was that until there was a new item saved for the day, the first read of the calendar, when building a river would fail, causing the build to finish. 
+
+The problem was discovered in <a href="http://podcatch.com/">podcatch.com</a>, and written up on the <a href="http://river4.smallpict.com/2015/04/21/foundASeriousRiver4Problem.html">River4 blog</a>.
 
 ##### v0.108 -- 12/5/14 by DW
 

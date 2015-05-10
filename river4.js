@@ -1,4 +1,4 @@
-var myVersion = "0.109", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.110", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -98,6 +98,8 @@ var todaysRiver = [], dayRiverCovers = new Date (), flRiverDirty = false;
 
 var whenLastEveryMinute = new Date ();
 var whenLastRiversBuild = new Date (); //8/6/14 by DW
+
+var fnameConfig = "config.json"; //5/9/15 by DW
 
 
 
@@ -618,6 +620,14 @@ function stringPopLastField (s, chdelim) { //5/28/14 by DW
 		}
 	return (s);
 	}
+function stringPopExtension (s) { //4/29/15 by DW
+	for (var i = s.length - 1; i >= 0; i--) {
+		if (s [i] == ".") {
+			return (stringMid (s, 1, i));
+			}
+		}
+	return (s);
+	}
 function filledString (ch, ct) { //6/4/14 by DW
 	var s = "";
 	for (var i = 0; i < ct; i++) {
@@ -726,7 +736,7 @@ function innerCaseName (text) { //8/12/14 by DW
 	return (s);
 	}
 function hitCounter (counterGroup, counterServer) { //8/12/14 by DW
-	var defaultCounterGroup = "scripting", defaultCounterServer = "http://counter.fargo.io/counter";
+	var defaultCounterGroup = "scripting", defaultCounterServer = "http://counter2.fargo.io:5337/counter";
 	var thispageurl = location.href;
 	if (counterGroup === undefined) {
 		counterGroup = defaultCounterGroup;
@@ -2634,7 +2644,7 @@ function handleRequest (httpRequest, httpResponse) {
 							whenServerStart: whenServerStart.toUTCString (), 
 							s3Path: s3path, //7/31/14 by DW
 							port: myPort, //7/31/14 by DW
-							defaultAcl: process.env.s3defaultAcl, //7/31/14 by DW
+							defaultAcl: s3defaultAcl, //7/31/14 by DW
 							hits: serverData.stats.ctHits, 
 							hitsToday: serverData.stats.ctHitsToday,
 							hitsThisRun: serverData.stats.ctHitsThisRun
@@ -2791,57 +2801,85 @@ function handleRequest (httpRequest, httpResponse) {
 		}
 	}
 
+function loadConfig (callback) { //5/9/15 by DW
+	fs.readFile (fnameConfig, function (err, data) {
+		if (!err) {
+			var config = JSON.parse (data.toString ());
+			if (config.enabled !== undefined) {
+				flEnabled = utils.getBoolean (config.enabled);
+				}
+			if (config.fspath !== undefined) {
+				fspath = config.fspath;
+				}
+			if (config.password !== undefined) {
+				remotePassword = config.password;
+				}
+			if (config.s3path !== undefined) {
+				s3path = config.s3path;
+				}
+			if (config.PORT !== undefined) {
+				myPort = config.PORT;
+				}
+			if (config.s3defaultAcl !== s3defaultAcl) {
+				s3defaultAcl = config.s3defaultAcl;
+				}
+			}
+		if (callback !== undefined) {
+			callback ();
+			}
+		});
+	}
 
 function startup () {
-	
-	if (process.env.s3defaultAcl != undefined) { //7/19/14 by DW
+	if (process.env.s3defaultAcl !== undefined) { //7/19/14 by DW
 		s3defaultAcl = process.env.s3defaultAcl;
 		}
-	
-	console.log (""); console.log (""); console.log (""); 
-	console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
-	console.log (""); 
-	
-	if (remotePassword == undefined) { //12/4/14 by DW
-		remotePassword = "";
-		}
-	if (fspath != undefined) { //9/24/14 by DW
-		console.log ("Running from the filesystem: " + fspath);
+	loadConfig (function () {
+		console.log (""); console.log (""); console.log (""); 
+		console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
 		console.log (""); 
-		s3path = fspath; 
-		}
-	s3UserListsPath = s3path + "lists/"; //where users store their lists
-	s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
-	s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
-	s3FeedsArrayPath = s3path + "data/feedsStats.json";
-	s3RiversArrayPath = s3path + "data/riversArray.json";
-	s3FeedsInListsPath = s3path + "data/feedsInLists.json";
-	s3FeedsDataFolder = s3path + "data/feeds/";
-	s3CalendarDataFolder = s3path + "data/calendar/";
-	s3BackupsFolder = s3path + "data/backups/"; //12/4/14 by DW
-	s3ListsDataFolder = s3path + "data/lists/";
-	s3IndexFile = s3path + "index.html";
-	
-	
-	loadServerData (function () {
-		applyPrefs ();
-		copyIndexFile (); //6/1/14 by DW
+		
+		if (remotePassword === undefined) { //12/4/14 by DW
+			remotePassword = "";
+			}
+		if (fspath !== undefined) { //9/24/14 by DW
+			console.log ("Running from the filesystem: " + fspath);
+			console.log (""); 
+			s3path = fspath; 
+			}
+		s3UserListsPath = s3path + "lists/"; //where users store their lists
+		s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
+		s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
+		s3FeedsArrayPath = s3path + "data/feedsStats.json";
+		s3RiversArrayPath = s3path + "data/riversArray.json";
+		s3FeedsInListsPath = s3path + "data/feedsInLists.json";
+		s3FeedsDataFolder = s3path + "data/feeds/";
+		s3CalendarDataFolder = s3path + "data/calendar/";
+		s3BackupsFolder = s3path + "data/backups/"; //12/4/14 by DW
+		s3ListsDataFolder = s3path + "data/lists/";
+		s3IndexFile = s3path + "index.html";
 		
 		
-		saveServerData (); //so hours-server-up stats update immediately
-		
-		loadFeedsArray (function () {
-			loadTodaysRiver (function () {
-				loadListsFromFolder (); //adds tasks to the queue
-				http.createServer (handleRequest).listen (myPort);
-				setInterval (function () {everySecond ()}, 1000); 
-				setInterval (function () {everyQuarterSecond ()}, 250);
-				setInterval (function () {everyFiveMinutes ()}, 300000); 
-				
-				everyMinute (); //it schedules its own next run
+		loadServerData (function () {
+			applyPrefs ();
+			copyIndexFile (); //6/1/14 by DW
+			
+			
+			saveServerData (); //so hours-server-up stats update immediately
+			
+			loadFeedsArray (function () {
+				loadTodaysRiver (function () {
+					loadListsFromFolder (); //adds tasks to the queue
+					http.createServer (handleRequest).listen (myPort);
+					setInterval (function () {everySecond ()}, 1000); 
+					setInterval (function () {everyQuarterSecond ()}, 250);
+					setInterval (function () {everyFiveMinutes ()}, 300000); 
+					
+					everyMinute (); //it schedules its own next run
+					});
 				});
+			
 			});
-		
 		});
 	}
 

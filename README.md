@@ -54,6 +54,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.110 -- 5/10/15 by DW
+
+<a href="http://river4.smallpict.com/2015/05/10/newWayToConfigureRiver4.html">A new way</a> to configure River4, using a config.son file in the same directory as river4.js.
+
 ##### v0.109 -- 4/21/15 by DW
 
 Fixed a bug that would cause generated rivers to be empty immediately after date rollover. 

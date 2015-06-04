@@ -54,6 +54,16 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.111 -- 6/4/15 by DW
+
+Added support for <a href="http://walkthrough.rsscloud.co/">rssCloud</a>. Now if a feed has a &lt;cloud> element, we contact the server and go through the subscription protocol. If it all works, we'll be notified of updates to the feed before we poll. 
+
+The rssCloud support is largely untested. However I have upgraded all my copies of River4 to run the new version, and it seems to be functioning well. Code review of the new functionality would be much appreciated. 
+
+We also remove items from each feed's history array when the item no longer appears in the feed. This reduces the size of some of the files in the data folder, in general making the software more efficient. 
+
+Fixed an error that would cause River4 to crash when there were no OPML subscription list files in the lists folder.
+
 ##### v0.110 -- 5/10/15 by DW
 
 <a href="http://river4.smallpict.com/2015/05/10/newWayToConfigureRiver4.html">A new way</a> to configure River4, using a config.son file in the same directory as river4.js.

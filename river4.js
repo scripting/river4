@@ -1,4 +1,4 @@
-var myVersion = "0.110", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.111h", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -12,6 +12,7 @@ var request = require ("request");
 var urlpack = require ("url");
 var util = require ("util");
 var fs = require ("fs");
+var qs = require ("querystring");
 
 var fspath = process.env.fspath; //9/24/14 by DW
 var remotePassword = process.env.password; //12/4/14 by DW
@@ -47,7 +48,8 @@ var serverData = {
 		maxRiverItems: 100,
 		maxBodyLength: 280,
 		flSkipDuplicateTitles: true,
-		flWriteItemsToFiles: false //debugging -- 5/30/14 by DW
+		flWriteItemsToFiles: false, //debugging -- 5/30/14 by DW
+		flRequestCloudNotify: true //6/4/15 by DW
 		},
 	stats: {
 		aggregator: "",
@@ -84,7 +86,9 @@ var serverData = {
 		whenLastRiverJsonSave: new Date (0), 
 		ctListSaves: 0, 
 		whenLastListSave: new Date (0), 
-		backupSerialnum: 0 
+		backupSerialnum: 0, 
+		ctRssCloudUpdates: 0,
+		whenLastRssCloudUpdate: new Date (0)
 		},
 	flags: []
 	}
@@ -100,6 +104,7 @@ var whenLastEveryMinute = new Date ();
 var whenLastRiversBuild = new Date (); //8/6/14 by DW
 
 var fnameConfig = "config.json"; //5/9/15 by DW
+var appConfig; //6/4/15 by DW -- the contents of config.json available to all code
 
 
 
@@ -584,7 +589,7 @@ function readHttpFile (url, callback, timeoutInMilliseconds) { //5/27/14 by DW
 		});
 	}
 function readHttpFileThruProxy (url, type, callback) { //10/25/14 by DW
-	var urlReadFileApi = "http://pub.fargo.io/httpReadUrl";
+	var urlReadFileApi = "http://pub2.fargo.io:5347/httpReadUrl";
 	if (type === undefined) {
 		type = "text/plain";
 		}
@@ -1446,13 +1451,15 @@ function fsListObjects (path, callback) {
 		if (!endsWith (path, "/")) {
 			path += "/";
 			}
-		for (var i = 0; i < list.length; i++) {
-			var obj = {
-				s3path: path + list [i],
-				path: path + list [i], //11/21/14 by DW
-				Size: 1
-				};
-			callback (obj);
+		if (list !== undefined) { //6/4/15 by DW
+			for (var i = 0; i < list.length; i++) {
+				var obj = {
+					s3path: path + list [i],
+					path: path + list [i], //11/21/14 by DW
+					Size: 1
+					};
+				callback (obj);
+				}
 			}
 		callback ({flLastObject: true});
 		});
@@ -1795,6 +1802,23 @@ function initFeedsArrayItem (feedstats) {
 	if (feedstats.whenLastChosenToRead == undefined) {
 		feedstats.whenLastChosenToRead = new Date (0);
 		}
+	
+	//init cloud stats -- 6/4/15 by DW
+		if (feedstats.ctCloudRenew === undefined) { 
+			feedstats.ctCloudRenew = 0;
+			}
+		if (feedstats.whenLastCloudRenew === undefined) {
+			feedstats.whenLastCloudRenew = new Date (0);
+			}
+		if (feedstats.ctCloudRenewErrors === undefined) {
+			feedstats.ctCloudRenewErrors = 0;
+			}
+		if (feedstats.ctConsecutiveCloudRenewErrors === undefined) {
+			feedstats.ctConsecutiveCloudRenewErrors = 0;
+			}
+		if (feedstats.whenLastCloudRenewError === undefined) {
+			feedstats.whenLastCloudRenewError = new Date (0);
+			}
 	}
 function addToFeedsArray (urlfeed, obj, listname) {
 	
@@ -1975,7 +1999,7 @@ function initFeed (urlfeed, callback, flwrite) {
 		}
 	var folderpath = getFolderPath (urlfeed), infofilepath = folderpath + "feedInfo.json";
 	var obj, starttime = new Date ();
-	if (flwrite == undefined) {
+	if (flwrite === undefined) {
 		flwrite = false;
 		}
 	stGetObject (infofilepath, function (error, data) {
@@ -1990,7 +2014,7 @@ function initFeed (urlfeed, callback, flwrite) {
 			if (obj.prefs == undefined) {
 				obj.prefs = new Object ();
 				}
-			if (obj.prefs.enabled == undefined) {
+			if (obj.prefs.enabled === undefined) {
 				obj.prefs.enabled = true;
 				}
 			if (obj.prefs.url == undefined) {
@@ -2110,6 +2134,7 @@ function saveFeed (feed) {
 	}
 function readFeed (urlfeed) {
 	var starttime = new Date ();
+	var itemsInFeed = new Object (); //6/3/15 by DW
 	initFeed (urlfeed, function (feed) {
 		if (feed.prefs.enabled) {
 			var ctitemsthisfeed = 0, flfirstread = feed.stats.ctReads == 0, feedstats;
@@ -2160,6 +2185,7 @@ function readFeed (urlfeed) {
 				
 				//set flnew -- do the history thing
 					var theGuid = getItemGuid (item);
+					itemsInFeed [theGuid] = true; //6/3/15 by DW
 					flnew = true;
 					for (var i = 0; i < feed.history.length; i++) {
 						if (feed.history [i].guid == theGuid) { //we've already seen it
@@ -2182,26 +2208,46 @@ function readFeed (urlfeed) {
 						feedstats.whenLastNewItem = starttime;
 						
 					
+					//copy feed info from item into the feed record -- 6/1/14 by DW
+						feed.feedInfo.title = item.meta.title;
+						feed.feedInfo.link = item.meta.link;
+						feed.feedInfo.description = item.meta.description;
+					//copy cloud info, if present -- 6/3/15 by DW
+						if (item.meta.cloud !== undefined) {
+							if (item.meta.cloud.domain !== undefined) {
+								feed.feedInfo.cloud = {
+									domain: item.meta.cloud.domain,
+									port: item.meta.cloud.port,
+									path: item.meta.cloud.path,
+									port: item.meta.cloud.port,
+									registerProcedure: item.meta.cloud.registerprocedure,
+									protocol: item.meta.cloud.protocol
+									};
+								feedstats.cloud = {
+									domain: item.meta.cloud.domain,
+									port: item.meta.cloud.port,
+									path: item.meta.cloud.path,
+									port: item.meta.cloud.port,
+									registerProcedure: item.meta.cloud.registerprocedure,
+									protocol: item.meta.cloud.protocol,
+									};
+								}
+							}
+					//copy feeds info from item into feeds in-memory array element -- 6/1/14 by DW
+						feedstats.title = item.meta.title;
+						feedstats.text = item.meta.title;
+						feedstats.htmlurl = item.meta.link;
+						feedstats.description = item.meta.description;
+						flFeedsArrayDirty = true;
+					
 					//exclude items that newly appear in feed but have a too-old pubdate
 						if ((item.pubDate != null) && (new Date (item.pubDate) < dateYesterday (feed.stats.mostRecentPubDate)) && (!flfirstread)) { 
 							flAddToRiver = false;
 							feed.stats.ctItemsTooOld++;
 							feed.stats.whenLastTooOldItem = starttime;
 							}
-					
 					if ((flAddToRiver) && (!flfirstread)) {
 						addToRiver (urlfeed, item);
-						
-						//copy feed info from item into the feed record -- 6/1/14 by DW
-							feed.feedInfo.title = item.meta.title;
-							feed.feedInfo.link = item.meta.link;
-							feed.feedInfo.description = item.meta.description;
-						//copy feeds info from item into feeds in-memory array element -- 6/1/14 by DW
-							feedstats.title = item.meta.title;
-							feedstats.text = item.meta.title;
-							feedstats.htmlurl = item.meta.link;
-							feedstats.description = item.meta.description;
-							flFeedsArrayDirty = true;
 						}
 					}
 				
@@ -2211,6 +2257,18 @@ function readFeed (urlfeed) {
 					}
 				});
 			feedparser.on ("end", function () {
+				//delete items in the history array that are no longer in the feed -- 6/3/15 by DW
+					var ctHistoryItemsDeleted = 0;
+					for (var i = feed.history.length - 1; i >= 0; i--) { //6/3/15 by DW
+						if (itemsInFeed [feed.history [i].guid] === undefined) { //it's no longer in the feed
+							feed.history.splice (i, 1);
+							ctHistoryItemsDeleted++;
+							}
+						}
+					if (ctHistoryItemsDeleted > 0) {
+						console.log ("readFeed: ctHistoryItemsDeleted == " + ctHistoryItemsDeleted);
+						}
+					
 				feed.stats.ctSecsLastRead = secondsSince (starttime);
 				saveFeed (feed);
 				});
@@ -2255,7 +2313,6 @@ function readIncludedList (listname, urloutline) { //6/17/14 by DW
 	opmlparser.on ("end", function () {
 		});
 	}
-
 function readOneList (listname, filepath) {
 	console.log ("readOneList: listname == " + listname + ", filepath == " + filepath);
 	var opmlparser = new OpmlParser ();
@@ -2388,7 +2445,6 @@ function loadListsFromFolder () {
 		});
 	}
 	
-
 function getAllLists (callback) {
 	var theLists = new Array ();
 	function getOneFile (ix) {
@@ -2474,6 +2530,75 @@ function saveSubscriptionList (listname, xmltext) { //12/1/14 by DW
 		});
 	}
 
+function pleaseNotify (urlServer, domain, port, path, urlFeed, feedstats, callback) { //6/4/15 by DW
+	var now = new Date ();
+	var theRequest = {
+		url: urlServer,
+		followRedirect: true, 
+		headers: {Accept: "application/json"},
+		method: "POST",
+		form: {
+			port: port,
+			path: path,
+			url1: urlFeed,
+			protocol: "http-post"
+			}
+		};
+	request (theRequest, function (error, response, body) {
+		try {
+			if (!error && (response.statusCode == 200)) {
+				feedstats.ctConsecutiveCloudRenewErrors = 0;
+				if (callback) {
+					callback ();
+					}
+				}
+			else {
+				console.log ("pleaseNotify: urlServer == " + urlServer + ", error, code == " + response.statusCode + ".\n");
+				feedstats.ctCloudRenewErrors++; //counts the number of communication errors
+				feedstats.ctConsecutiveCloudRenewErrors++;
+				feedstats.whenLastCloudRenewError = now;
+				}
+			}
+		catch (err) {
+			console.log ("pleaseNotify: urlServer == " + urlServer + ", err.message == " + err.message);
+			feedstats.ctCloudRenewErrors++; //counts the number of communication errors
+			feedstats.ctConsecutiveCloudRenewErrors++;
+			feedstats.whenLastCloudRenewError = now;
+			}
+		feedstats.ctCloudRenew++;
+		feedstats.whenLastCloudRenew = now;
+		flFeedsArrayDirty = true; //because we modified feedstats
+		});
+	}
+function renewNextSubscription () { //6/4/15 by DW
+	if (serverData.prefs.flRequestCloudNotify) {
+		var theFeed;
+		for (var i = 0; i < feedsArray.length; i++) {
+			theFeed = feedsArray [i];
+			if (theFeed.cloud !== undefined) {
+				if (secondsSince (theFeed.whenLastCloudRenew) > (23 * 60 * 60)) { //ready to be renewed
+					var urlCloudServer = "http://" + theFeed.cloud.domain + ":" + theFeed.cloud.port + theFeed.cloud.path;
+					pleaseNotify (urlCloudServer, undefined, myPort, "/feedupdated", theFeed.url, theFeed, function () {
+						console.log ("renewNextSubscription: urlCloudServer == " + urlCloudServer);
+						});
+					return; //we renew at most one each time we're called
+					}
+				}
+			}
+		}
+	}
+function rssCloudFeedUpdated (urlFeed) { //6/4/15 by DW
+	if (findInFeedsArray (urlFeed) === undefined) {
+		console.log ("\nfeedUpdated: url == " + urlFeed + ", but we're not subscribed to this feed, so it wasn't read.\n");
+		}
+	else {
+		var now = new Date ();
+		serverData.stats.whenLastRssCloudUpdate = now;
+		serverData.stats.ctRssCloudUpdates++;
+		console.log ("\nfeedUpdated: url == " + urlFeed + ", now == " + now.toLocaleString () + "\n");
+		}
+	}
+
 function applyPrefs () {
 	http.globalAgent.maxSockets = serverData.prefs.maxThreads * 5;
 	https.globalAgent.maxSockets = serverData.prefs.maxThreads * 5;
@@ -2529,7 +2654,7 @@ function everySecond () {
 		for (var i = 0; i < ct; i++) {
 			if (countHttpSockets () <= serverData.prefs.maxThreads) {
 				var feedstats = findNextFeedToRead ();
-				if (feedstats != undefined) { //a feed is ready to read
+				if (feedstats !== undefined) { //a feed is ready to read
 					readFeed (feedstats.url);
 					}
 				} 
@@ -2541,6 +2666,8 @@ function everyMinute () {
 		var now = new Date (), enabledMessage = "";
 		serverData.stats.ctHttpSockets = countHttpSockets (); 
 		serverData.stats.ctMinutes++;
+		
+		renewNextSubscription (); //6/4/15 by DW
 		
 		if (!serverData.prefs.enabled) { //12/4/14 by DW
 			enabledMessage = " server is not enabled.";
@@ -2743,6 +2870,12 @@ function handleRequest (httpRequest, httpResponse) {
 					case "/getprefs": //12/1/14 by DW
 						respondWithObject (serverData.prefs);
 						break;
+					case "/feedupdated": //6/4/15 by DW
+						var challenge = parsedUrl.query.challenge;
+						console.log ("/feedupdated: challenge == " + challenge);
+						httpResponse.writeHead (200, {"Content-Type": "text/plain"});
+						httpResponse.end (challenge);    
+						break;
 					
 					default: //404 not found
 						httpResponse.writeHead (404, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
@@ -2762,8 +2895,13 @@ function handleRequest (httpRequest, httpResponse) {
 							flPostAllowed = true;
 							}
 						else {
-							if (remotePassword.length > 0) { //must have password set
-								flPostAllowed = (parsedUrl.query.password === remotePassword);
+							if (lowerpath == "/feedupdated") {
+								flPostAllowed = true;
+								}
+							else {
+								if (remotePassword.length > 0) { //must have password set
+									flPostAllowed = (parsedUrl.query.password === remotePassword);
+									}
 								}
 							}
 					if (flPostAllowed) {
@@ -2781,6 +2919,12 @@ function handleRequest (httpRequest, httpResponse) {
 								httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 								saveSubscriptionList (parsedUrl.query.listname, body);
 								httpResponse.end ("");    
+								break;
+							case "/feedupdated": //6/4/15 by DW
+								var postbody = qs.parse (body);
+								rssCloudFeedUpdated (postbody.url);
+								httpResponse.writeHead (200, {"Content-Type": "text/plain"});
+								httpResponse.end ("Thanks for the update! :-)");    
 								break;
 							default: //404 not found
 								httpResponse.writeHead (404, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
@@ -2823,6 +2967,7 @@ function loadConfig (callback) { //5/9/15 by DW
 			if (config.s3defaultAcl !== s3defaultAcl) {
 				s3defaultAcl = config.s3defaultAcl;
 				}
+			appConfig = config; //6/4/15 by DW
 			}
 		if (callback !== undefined) {
 			callback ();

@@ -54,6 +54,12 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.112 -- 6/5/15 by DW
+
+Now when we receive a message saying that a feed updated, we read the feed and rebuild all rivers that it's part of. I wanted to test the framework before going this step. 
+
+Again, a careful code review and testing by others would be appreciated. 
+
 ##### v0.111 -- 6/4/15 by DW
 
 Added support for <a href="http://walkthrough.rsscloud.co/">rssCloud</a>. Now if a feed has a &lt;cloud> element, we contact the server and go through the subscription protocol. If it all works, we'll be notified of updates to the feed before we poll. 

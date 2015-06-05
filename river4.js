@@ -1,4 +1,4 @@
-var myVersion = "0.111h", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.112a", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -2128,11 +2128,14 @@ function initFeed (urlfeed, callback, flwrite) {
 			}
 		});
 	}
-function saveFeed (feed) {
+function saveFeed (feed, callback) {
 	stNewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+		if (callback !== undefined) { //6/5/15 by DW
+			callback ();
+			}
 		});
 	}
-function readFeed (urlfeed) {
+function readFeed (urlfeed, callback) {
 	var starttime = new Date ();
 	var itemsInFeed = new Object (); //6/3/15 by DW
 	initFeed (urlfeed, function (feed) {
@@ -2270,7 +2273,11 @@ function readFeed (urlfeed) {
 						}
 					
 				feed.stats.ctSecsLastRead = secondsSince (starttime);
-				saveFeed (feed);
+				saveFeed (feed, function () {
+					if (callback !== undefined) { //6/5/15 by DW
+						callback ();
+						}
+					});
 				});
 			feedparser.on ("error", function () {
 				feed.stats.ctReadErrors++;
@@ -2588,14 +2595,24 @@ function renewNextSubscription () { //6/4/15 by DW
 		}
 	}
 function rssCloudFeedUpdated (urlFeed) { //6/4/15 by DW
-	if (findInFeedsArray (urlFeed) === undefined) {
-		console.log ("\nfeedUpdated: url == " + urlFeed + ", but we're not subscribed to this feed, so it wasn't read.\n");
+	var feedstats = findInFeedsArray (urlFeed);
+	if (feedstats === undefined) {
+		console.log ("\nrssCloudFeedUpdated: url == " + urlFeed + ", but we're not subscribed to this feed, so it wasn't read.\n");
 		}
 	else {
 		var now = new Date ();
 		serverData.stats.whenLastRssCloudUpdate = now;
 		serverData.stats.ctRssCloudUpdates++;
-		console.log ("\nfeedUpdated: url == " + urlFeed + ", now == " + now.toLocaleString () + "\n");
+		console.log ("\nrssCloudFeedUpdated: url == " + urlFeed + ", now == " + now.toLocaleString ());
+		readFeed (urlFeed, function () {
+			for (var i = 0; i < feedstats.lists.length; i++) {
+				var listname = "\"" + feedstats.lists [i] + "\"";
+				var flskip = serverData.prefs.flSkipDuplicateTitles;
+				var s = "buildOneRiver (" + listname + ", true, " + flskip + ", true);";
+				console.log ("rssCloudFeedUpdated: " + s);
+				qAddTask (s);
+				}
+			});
 		}
 	}
 

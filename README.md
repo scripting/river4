@@ -54,6 +54,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.113 -- 6/7/15 by DW
+
+We now record the current time in each item in the calendar structure. This is used when building a river to set the whenLastUpdate field. 
+
 ##### v0.112 -- 6/5/15 by DW
 
 Now when we receive a message saying that a feed updated, we read the feed and rebuild all rivers that it's part of. I wanted to test the framework before going this step. 

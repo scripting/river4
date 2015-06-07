@@ -1,4 +1,4 @@
-var myVersion = "0.112a", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.113a", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -1300,7 +1300,13 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 										else {
 											theRiverFeed.feedDescription = feedstats.description;
 											}
-									theRiverFeed.whenLastUpdate = new Date (feedstats.whenLastNewItem).toUTCString ();
+									//whenLastUpdate -- 6/7/15 by DW
+										if (story.when !== undefined) {
+											theRiverFeed.whenLastUpdate = new Date (story.when).toUTCString ();
+											}
+										else {
+											theRiverFeed.whenLastUpdate = new Date (feedstats.whenLastNewItem).toUTCString ();
+											}
 									theRiverFeed.item = new Array ();
 									}
 								
@@ -1673,6 +1679,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		item.pubdate = getDate (itemFromParser.pubDate);
 		item.comments = getString (itemFromParser.comments);
 		item.feedUrl = urlfeed;
+		item.when = now; //6/7/15 by DW
 		item.aggregator = myProductName + " v" + myVersion;
 		item.id = serverData.stats.serialnum++; //5/28/14 by DW
 	todaysRiver [todaysRiver.length] = item;

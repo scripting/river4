@@ -1,4 +1,4 @@
-var myVersion = "0.113a", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.114c", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -568,6 +568,22 @@ function random (lower, upper) {
 function removeMultipleBlanks (s) { //7/30/14 by DW
 	return (s.toString().replace (/ +/g, " "));
 	}
+function jsonStringify (jstruct, flFixBreakage) { //7/30/14 by DW
+	//Changes
+		//6/16/15; 10:43:25 AM by DW
+			//Andrew Shell reported an issue in the encoding of JSON that's solved by doing character replacement. 
+			//However, this is too big a change to make for all the code that calls this library routine, so we added a boolean flag, xxx.
+			//If this proves to be harmless, we'll change the default to true. 
+			//http://river4.smallpict.com/2015/06/16/jsonEncodingIssueSolved.html
+	if (flFixBreakage === undefined) {
+		flFixBreakage = false;
+		}
+	var s = JSON.stringify (jstruct, undefined, 4);
+	if (flFixBreakage) {
+		s = s.replace (/\u2028/g,'\\u2028').replace (/\u2029/g,'\\u2029');
+		}
+	return (s);
+	}
 function stringAddCommas (x) { //5/27/14 by DW
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}
@@ -694,9 +710,6 @@ function getFavicon (url) { //7/18/14 by DW
 	var domain = getDomain (url);
 	return ("http://www.google.com/s2/favicons?domain=" + domain);
 	};
-function jsonStringify (jstruct) { //7/19/14 by DW
-	return (JSON.stringify (jstruct, undefined, 4));
-	}
 function getURLParameter (name) { //7/21/14 by DW
 	return (decodeURI ((RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]));
 	}
@@ -1237,7 +1250,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 			whenLocal: starttime.toLocaleString (),
 			aggregator: myProductName + " v" + myVersion
 			};
-		jsontext = JSON.stringify (theRiver, undefined, 4);
+		jsontext = jsonStringify (theRiver, true);
 		if (flAddJsonpWrapper) {
 			jsontext = "onGetRiverStream (" + jsontext + ")";
 			}
@@ -1369,7 +1382,6 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 			}
 		}
 	doOneDay (starttime);
-	
 	}
 
 var fsStats = {
@@ -1548,7 +1560,7 @@ function loadTodaysRiver (callback) {
 function saveTodaysRiver (callback) {
 	var now = new Date ();
 	console.log ("saveTodaysRiver: " + getCalendarPath (dayRiverCovers));
-	stNewObject (getCalendarPath (dayRiverCovers), JSON.stringify (todaysRiver, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (getCalendarPath (dayRiverCovers), jsonStringify (todaysRiver, true), "application/json", s3defaultAcl, function (error, data) {
 		serverData.stats.ctRiverSaves++;
 		serverData.stats.whenLastRiverSave = now;
 		if (error) { //4/21/15 by DW -- we were counting errors incorrectly
@@ -1760,7 +1772,7 @@ function updateStatsBeforeSave () {
 	}
 function saveServerData () {
 	updateStatsBeforeSave ();
-	stNewObject (s3PrefsAndStatsPath, JSON.stringify (serverData, undefined, 4), "application/json", s3defaultAcl);
+	stNewObject (s3PrefsAndStatsPath, jsonStringify (serverData, true), "application/json", s3defaultAcl);
 	}
 
 function addToFeedsInLists (urlfeed) { //5/30/14 by DW
@@ -1772,7 +1784,7 @@ function addToFeedsInLists (urlfeed) { //5/30/14 by DW
 		}
 	}
 function saveFeedsInLists () { //5/30/14 by DW
-	stNewObject (s3FeedsInListsPath, JSON.stringify (feedsInLists, undefined, 4), "application/json", s3defaultAcl);
+	stNewObject (s3FeedsInListsPath, jsonStringify (feedsInLists, true), "application/json", s3defaultAcl);
 	}
 function atLeastOneSubscriber (urlfeed) {
 	return (feedsInLists [urlfeed] != undefined);
@@ -1866,7 +1878,7 @@ function addToFeedsArray (urlfeed, obj, listname) {
 function saveFeedsArray () {
 	flFeedsArrayDirty = false;
 	console.log ("saveFeedsArray: " + s3FeedsArrayPath);
-	stNewObject (s3FeedsArrayPath, JSON.stringify (feedsArray, undefined, 4), "application/json", s3defaultAcl);
+	stNewObject (s3FeedsArrayPath, jsonStringify (feedsArray, true), "application/json", s3defaultAcl);
 	}
 function loadFeedsArray (callback) {
 	stGetObject (s3FeedsArrayPath, function (error, data) {
@@ -2126,7 +2138,7 @@ function initFeed (urlfeed, callback, flwrite) {
 			}
 		
 		if (flwrite) {
-			stNewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+			stNewObject (infofilepath, jsonStringify (obj, true), "application/json", s3defaultAcl, function (error, data) {
 				secsLastInit = secondsSince (starttime);
 				});
 			}
@@ -2136,7 +2148,7 @@ function initFeed (urlfeed, callback, flwrite) {
 		});
 	}
 function saveFeed (feed, callback) {
-	stNewObject (feed.stats.s3MyPath, JSON.stringify (feed, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (feed.stats.s3MyPath, jsonStringify (feed, true), "application/json", s3defaultAcl, function (error, data) {
 		if (callback !== undefined) { //6/5/15 by DW
 			callback ();
 			}
@@ -2263,7 +2275,7 @@ function readFeed (urlfeed, callback) {
 				
 				if (serverData.prefs.flWriteItemsToFiles) { //debugging
 					var path = feed.stats.s3FolderPath + "items/" + padWithZeros (ctitemsthisfeed++, 3) + ".json";
-					stNewObject (path, JSON.stringify (item, undefined, 4), "application/json", s3defaultAcl);
+					stNewObject (path, jsonStringify (item, true), "application/json", s3defaultAcl);
 					}
 				});
 			feedparser.on ("end", function () {
@@ -2428,7 +2440,7 @@ function initList (name, callback) {
 			callback (obj);
 			}
 		
-		stNewObject (infofilepath, JSON.stringify (obj, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+		stNewObject (infofilepath, jsonStringify (obj, true), "application/json", s3defaultAcl, function (error, data) {
 			});
 		});
 	}
@@ -2652,7 +2664,7 @@ function buildRiversArray () { //6/1/14 by DW -- build a data structure used by 
 		obj.description = "";
 		riversArray [i] = obj;
 		}
-	stNewObject (s3RiversArrayPath, JSON.stringify (riversArray, undefined, 4), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (s3RiversArrayPath, jsonStringify (riversArray, true), "application/json", s3defaultAcl, function (error, data) {
 		console.log ("buildRiversArray: " + s3RiversArrayPath);
 		});
 	}
@@ -2697,7 +2709,7 @@ function everyMinute () {
 			enabledMessage = " server is not enabled.";
 			}
 		
-		console.log (""); console.log ("everyMinute: " + now.toLocaleTimeString () + ", " + qSize () + " items on the task queue, " + serverData.stats.ctHttpSockets  + " sockets open, " + feedsArray.length + " feeds." + enabledMessage);
+		console.log (""); console.log ("everyMinute: " + now.toLocaleTimeString () + ", " + qSize () + " items on the task queue, " + serverData.stats.ctHttpSockets  + " sockets open, " + feedsArray.length + " feeds." + enabledMessage + " v" + myVersion);
 		
 		clearBuildRiverCache ();
 		
@@ -2801,16 +2813,16 @@ function handleRequest (httpRequest, httpResponse) {
 							hitsThisRun: serverData.stats.ctHitsThisRun
 							};
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (JSON.stringify (myStatus, undefined, 4));    
+						httpResponse.end (jsonStringify (myStatus, true));    
 						break;
 					case "/serverdata":
 						updateStatsBeforeSave ();
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (JSON.stringify (serverData.stats, undefined, 4));    
+						httpResponse.end (jsonStringify (serverData.stats, true));    
 						break;
 					case "/feedstats":
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (JSON.stringify (feedsArray, undefined, 4));    
+						httpResponse.end (jsonStringify (feedsArray, true));    
 						break;
 					case "/buildallrivers":
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});

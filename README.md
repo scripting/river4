@@ -54,6 +54,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.114 -- 6/16/15 by DW
+
+Fixed <a href="http://river4.smallpict.com/2015/06/16/jsonEncodingIssueSolved.html">JSON encoding problem</a> reported by Andrew Shell. 
+
 ##### v0.113 -- 6/7/15 by DW
 
 We now record the current time in each item in the calendar structure. This is used when building a river to set the whenLastUpdate field. 

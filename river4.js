@@ -572,7 +572,7 @@ function jsonStringify (jstruct, flFixBreakage) { //7/30/14 by DW
 	//Changes
 		//6/16/15; 10:43:25 AM by DW
 			//Andrew Shell reported an issue in the encoding of JSON that's solved by doing character replacement. 
-			//However, this is too big a change to make for all the code that calls this library routine, so we added a boolean flag, xxx.
+			//However, this is too big a change to make for all the code that calls this library routine, so we added a boolean flag, flFixBreakage.
 			//If this proves to be harmless, we'll change the default to true. 
 			//http://river4.smallpict.com/2015/06/16/jsonEncodingIssueSolved.html
 	if (flFixBreakage === undefined) {

@@ -54,6 +54,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.115 -- 6/21/15 by DW
+
+New feature: <a href="https://github.com/scripting/river4/wiki/How-callbacks-work-in-River4">Callback scripts</a> that run when River4 adds an item to the river. 
+
 ##### v0.114 -- 6/16/15 by DW
 
 Fixed <a href="http://river4.smallpict.com/2015/06/16/jsonEncodingIssueSolved.html">JSON encoding problem</a> reported by Andrew Shell. 

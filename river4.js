@@ -1,4 +1,4 @@
-var myVersion = "0.114c", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.115c", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -88,7 +88,9 @@ var serverData = {
 		whenLastListSave: new Date (0), 
 		backupSerialnum: 0, 
 		ctRssCloudUpdates: 0,
-		whenLastRssCloudUpdate: new Date (0)
+		whenLastRssCloudUpdate: new Date (0),
+		ctLocalStorageWrites: 0,
+		whenLastLocalStorageWrite: new Date (0)
 		},
 	flags: []
 	}
@@ -105,6 +107,8 @@ var whenLastRiversBuild = new Date (); //8/6/14 by DW
 
 var fnameConfig = "config.json"; //5/9/15 by DW
 var appConfig; //6/4/15 by DW -- the contents of config.json available to all code
+
+var addToRiverCallbacksFolder = "callbacks/addToRiver/"; //6/19/15 by DW
 
 
 
@@ -1173,18 +1177,17 @@ function qAddTask (taskcode, taskdata) { //add task at end of array
 	}
 function qRunNextTask () { //run the task at the beginning of array
 	if (qNotEmpty ()) {
-		var data = JSON.parse (JSON.stringify (taskQ [0].data)), code = taskQ [0].code;
-		taskQ.splice (0, 1); //remove first item
-		with (data) {
-			eval (code);
+		var theTask = taskQ [0];
+		if (theTask.data !== undefined) {
+			with (theTask.data) {
+				eval (theTask.code);
+				}
 			}
+		else {
+			eval (theTask.code);
+			}
+		taskQ.splice (0, 1); //remove first item
 		}
-	}
-function qTest () {
-	for (var i = 0; i < 10000; i++) {
-		qAddTask ("console.log (val);", {val: i, filepath: "tunafish"});
-		}
-	setInterval (function () {qRunNextTask ()}, 1000); //call every second
 	}
 
  
@@ -1483,6 +1486,99 @@ function fsListObjects (path, callback) {
 		});
 	}
  
+var localStorage = {
+	};
+var fnameLocalStorage = "data/localStorage.json";
+var lastLocalStorageJson;
+
+function readLocalStorage (callback) {
+	fsSureFilePath (fnameLocalStorage, function () {
+		fs.exists (fnameLocalStorage, function (flExists) {
+			if (flExists) {
+				fs.readFile (fnameLocalStorage, function (err, data) {
+					if (err) {
+						console.log ("readLocalStorage: error reading file " + f + " == " + err.message)
+						}
+					else {
+						localStorage = JSON.parse (data.toString ());
+						}
+					if (callback != undefined) {
+						callback ();
+						}
+					});
+				}
+			else {
+				writeLocalStorageIfChanged (); //write the empty struct
+				if (callback != undefined) {
+					callback ();
+					}
+				}
+			});
+		});
+	}
+function writeLocalStorageIfChanged () {
+	var s = jsonStringify (localStorage), now = new Date ();
+	if (s != lastLocalStorageJson) {
+		lastLocalStorageJson = s;
+		fsSureFilePath (fnameLocalStorage, function () {
+			fs.writeFile (fnameLocalStorage, s, function (err) {
+				if (err) {
+					console.log ("writeLocalStorageIfChanged: error == " + err.message);
+					}
+				serverData.stats.ctLocalStorageWrites++;
+				serverData.stats.whenLastLocalStorageWrite = now;
+				});
+			});
+		}
+	}
+function runUserScript (s, dataforscripts, scriptName) {
+	try {
+		if (dataforscripts !== undefined) {
+			with (dataforscripts) {
+				eval (s);
+				}
+			}
+		else {
+			eval (s);
+			}
+		}
+	catch (err) {
+		console.log ("runUserScript: error running \"" + scriptName + "\" == " + err.message);
+		}
+	}
+function runScriptsInFolder (path, dataforscripts, callback) {
+	fsSureFilePath (path, function () {
+		fs.readdir (path, function (err, list) {
+			for (var i = 0; i < list.length; i++) {
+				var fname = list [i];
+				if (endsWith (fname.toLowerCase (), ".js")) {
+					var f = path + fname;
+					fs.readFile (f, function (err, data) {
+						if (err) {
+							console.log ("runScriptsInFolder: error == " + err.message);
+							}
+						else {
+							runUserScript (data.toString (), dataforscripts, f);
+							}
+						});
+					}
+				}
+			if (callback != undefined) {
+				callback ();
+				}
+			});
+		});
+	}
+function callAddToRiverCallbacks (urlfeed, itemFromParser, itemFromRiver) {
+	var dataforscripts = {
+		urlfeed: urlfeed,
+		itemFromParser: itemFromParser,
+		itemFromRiver: itemFromRiver
+		};
+	runScriptsInFolder (addToRiverCallbacksFolder, dataforscripts, function () {
+		});
+	}
+
 
 
 //storage routines -- 9/24/14 by DW
@@ -1511,6 +1607,9 @@ function fsListObjects (path, callback) {
 			}
 		}
 
+function todaysRiverChanged () { //6/21/15 by DW -- callback scripts, call this to be sure your changes get saved
+	flRiverDirty = true;
+	}
 function httpReadUrl (url, callback) { //12/1/14 by DW
 	request (url, function (error, response, body) {
 		if (!error && (response.statusCode == 200)) {
@@ -1583,12 +1682,14 @@ function checkRiverRollover () {
 		serverData.stats.ctHitsToday = 0;
 		saveTodaysRiver (); //4/21/15 by DW -- initialize empty river
 		}
-	if (!sameDay (now, dayRiverCovers)) { //rollover
-		if (flRiverDirty) {
-			saveTodaysRiver (roll);
-			}
-		else {
-			roll ();
+	if (secondsSince (serverData.stats.whenLastStoryAdded) >= 60) {
+		if (!sameDay (now, dayRiverCovers)) { //rollover
+			if (flRiverDirty) {
+				saveTodaysRiver (roll);
+				}
+			else {
+				roll ();
+				}
 			}
 		}
 	}
@@ -1701,13 +1802,14 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		serverData.stats.ctStoriesAddedThisRun++;
 		serverData.stats.whenLastStoryAdded = now;
 		serverData.stats.lastStoryAdded = item;
-	
 	//show in console
 		var consolemsg = itemFromParser.title;
 		if (consolemsg == null) {
 			consolemsg = maxStringLength (stripMarkup (itemFromParser.description), 80);
 			}
 		console.log ("***addToRiver: " + consolemsg);
+	
+	callAddToRiverCallbacks (urlfeed, itemFromParser, todaysRiver [todaysRiver.length - 1]); //6/19/15 by DW
 	}
 
 function loadServerData (callback) {
@@ -2704,6 +2806,7 @@ function everyMinute () {
 		serverData.stats.ctMinutes++;
 		
 		renewNextSubscription (); //6/4/15 by DW
+		writeLocalStorageIfChanged (); //6/20/15 by DW
 		
 		if (!serverData.prefs.enabled) { //12/4/14 by DW
 			enabledMessage = " server is not enabled.";
@@ -3016,50 +3119,51 @@ function startup () {
 		s3defaultAcl = process.env.s3defaultAcl;
 		}
 	loadConfig (function () {
-		console.log (""); console.log (""); console.log (""); 
-		console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
-		console.log (""); 
-		
-		if (remotePassword === undefined) { //12/4/14 by DW
-			remotePassword = "";
-			}
-		if (fspath !== undefined) { //9/24/14 by DW
-			console.log ("Running from the filesystem: " + fspath);
+		readLocalStorage (function () { //6/20/15 by DW
+			console.log (""); console.log (""); console.log (""); 
+			console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
 			console.log (""); 
-			s3path = fspath; 
-			}
-		s3UserListsPath = s3path + "lists/"; //where users store their lists
-		s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
-		s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
-		s3FeedsArrayPath = s3path + "data/feedsStats.json";
-		s3RiversArrayPath = s3path + "data/riversArray.json";
-		s3FeedsInListsPath = s3path + "data/feedsInLists.json";
-		s3FeedsDataFolder = s3path + "data/feeds/";
-		s3CalendarDataFolder = s3path + "data/calendar/";
-		s3BackupsFolder = s3path + "data/backups/"; //12/4/14 by DW
-		s3ListsDataFolder = s3path + "data/lists/";
-		s3IndexFile = s3path + "index.html";
-		
-		
-		loadServerData (function () {
-			applyPrefs ();
-			copyIndexFile (); //6/1/14 by DW
 			
+			if (remotePassword === undefined) { //12/4/14 by DW
+				remotePassword = "";
+				}
+			if (fspath !== undefined) { //9/24/14 by DW
+				console.log ("Running from the filesystem: " + fspath);
+				console.log (""); 
+				s3path = fspath; 
+				}
+			s3UserListsPath = s3path + "lists/"; //where users store their lists
+			s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
+			s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
+			s3FeedsArrayPath = s3path + "data/feedsStats.json";
+			s3RiversArrayPath = s3path + "data/riversArray.json";
+			s3FeedsInListsPath = s3path + "data/feedsInLists.json";
+			s3FeedsDataFolder = s3path + "data/feeds/";
+			s3CalendarDataFolder = s3path + "data/calendar/";
+			s3BackupsFolder = s3path + "data/backups/"; //12/4/14 by DW
+			s3ListsDataFolder = s3path + "data/lists/";
+			s3IndexFile = s3path + "index.html";
 			
-			saveServerData (); //so hours-server-up stats update immediately
-			
-			loadFeedsArray (function () {
-				loadTodaysRiver (function () {
-					loadListsFromFolder (); //adds tasks to the queue
-					http.createServer (handleRequest).listen (myPort);
-					setInterval (function () {everySecond ()}, 1000); 
-					setInterval (function () {everyQuarterSecond ()}, 250);
-					setInterval (function () {everyFiveMinutes ()}, 300000); 
-					
-					everyMinute (); //it schedules its own next run
+			loadServerData (function () {
+				applyPrefs ();
+				copyIndexFile (); //6/1/14 by DW
+				
+				
+				saveServerData (); //so hours-server-up stats update immediately
+				
+				loadFeedsArray (function () {
+					loadTodaysRiver (function () {
+						loadListsFromFolder (); //adds tasks to the queue
+						http.createServer (handleRequest).listen (myPort);
+						setInterval (function () {everySecond ()}, 1000); 
+						setInterval (function () {everyQuarterSecond ()}, 250);
+						setInterval (function () {everyFiveMinutes ()}, 300000); 
+						
+						everyMinute (); //it schedules its own next run
+						});
 					});
+				
 				});
-			
 			});
 		});
 	}

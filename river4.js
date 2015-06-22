@@ -1,4 +1,4 @@
-var myVersion = "0.115c", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.115f", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -21,6 +21,7 @@ var s3path = process.env.s3path;
 var s3UserListsPath; 
 var s3UserRiversPath; 
 var s3PrefsAndStatsPath;
+var s3LocalStoragePath; //6/22/15 by DW
 var s3FeedsArrayPath;
 var s3RiversArrayPath;
 var s3FeedsInListsPath;
@@ -1488,49 +1489,28 @@ function fsListObjects (path, callback) {
  
 var localStorage = {
 	};
-var fnameLocalStorage = "data/localStorage.json";
 var lastLocalStorageJson;
 
-function readLocalStorage (callback) {
-	fsSureFilePath (fnameLocalStorage, function () {
-		fs.exists (fnameLocalStorage, function (flExists) {
-			if (flExists) {
-				fs.readFile (fnameLocalStorage, function (err, data) {
-					if (err) {
-						console.log ("readLocalStorage: error reading file " + f + " == " + err.message)
-						}
-					else {
-						localStorage = JSON.parse (data.toString ());
-						}
-					if (callback != undefined) {
-						callback ();
-						}
-					});
-				}
-			else {
-				writeLocalStorageIfChanged (); //write the empty struct
-				if (callback != undefined) {
-					callback ();
-					}
-				}
-			});
+function loadLocalStorage (callback) {
+	console.log ("loadLocalStorage: " + s3LocalStoragePath);
+	stGetObject (s3LocalStoragePath, function (error, data) {
+		if (!error) {
+			localStorage = parseJson (data.Body, s3LocalStoragePath);
+			}
+		if (callback != undefined) {
+			callback ();
+			}
 		});
 	}
 function writeLocalStorageIfChanged () {
-	var s = jsonStringify (localStorage), now = new Date ();
+	var s = jsonStringify (localStorage);
 	if (s != lastLocalStorageJson) {
 		lastLocalStorageJson = s;
-		fsSureFilePath (fnameLocalStorage, function () {
-			fs.writeFile (fnameLocalStorage, s, function (err) {
-				if (err) {
-					console.log ("writeLocalStorageIfChanged: error == " + err.message);
-					}
-				serverData.stats.ctLocalStorageWrites++;
-				serverData.stats.whenLastLocalStorageWrite = now;
-				});
-			});
+		stNewObject (s3LocalStoragePath, s, "application/json", s3defaultAcl);
 		}
 	}
+
+
 function runUserScript (s, dataforscripts, scriptName) {
 	try {
 		if (dataforscripts !== undefined) {
@@ -3119,39 +3099,40 @@ function startup () {
 		s3defaultAcl = process.env.s3defaultAcl;
 		}
 	loadConfig (function () {
-		readLocalStorage (function () { //6/20/15 by DW
-			console.log (""); console.log (""); console.log (""); 
-			console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
+		console.log (""); console.log (""); console.log (""); 
+		console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
+		console.log (""); 
+		
+		if (remotePassword === undefined) { //12/4/14 by DW
+			remotePassword = "";
+			}
+		if (fspath !== undefined) { //9/24/14 by DW
+			console.log ("Running from the filesystem: " + fspath);
 			console.log (""); 
+			s3path = fspath; 
+			}
+		s3UserListsPath = s3path + "lists/"; //where users store their lists
+		s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
+		s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
+		s3LocalStoragePath = s3path + "data/localStorage.json"; //6/22/15 by DW
+		s3FeedsArrayPath = s3path + "data/feedsStats.json";
+		s3RiversArrayPath = s3path + "data/riversArray.json";
+		s3FeedsInListsPath = s3path + "data/feedsInLists.json";
+		s3FeedsDataFolder = s3path + "data/feeds/";
+		s3CalendarDataFolder = s3path + "data/calendar/";
+		s3BackupsFolder = s3path + "data/backups/"; //12/4/14 by DW
+		s3ListsDataFolder = s3path + "data/lists/";
+		s3IndexFile = s3path + "index.html";
+		
+		loadServerData (function () {
+			applyPrefs ();
+			copyIndexFile (); //6/1/14 by DW
 			
-			if (remotePassword === undefined) { //12/4/14 by DW
-				remotePassword = "";
-				}
-			if (fspath !== undefined) { //9/24/14 by DW
-				console.log ("Running from the filesystem: " + fspath);
-				console.log (""); 
-				s3path = fspath; 
-				}
-			s3UserListsPath = s3path + "lists/"; //where users store their lists
-			s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
-			s3PrefsAndStatsPath = s3path + "data/prefsAndStats.json";
-			s3FeedsArrayPath = s3path + "data/feedsStats.json";
-			s3RiversArrayPath = s3path + "data/riversArray.json";
-			s3FeedsInListsPath = s3path + "data/feedsInLists.json";
-			s3FeedsDataFolder = s3path + "data/feeds/";
-			s3CalendarDataFolder = s3path + "data/calendar/";
-			s3BackupsFolder = s3path + "data/backups/"; //12/4/14 by DW
-			s3ListsDataFolder = s3path + "data/lists/";
-			s3IndexFile = s3path + "index.html";
 			
-			loadServerData (function () {
-				applyPrefs ();
-				copyIndexFile (); //6/1/14 by DW
-				
-				
-				saveServerData (); //so hours-server-up stats update immediately
-				
-				loadFeedsArray (function () {
+			saveServerData (); //so hours-server-up stats update immediately
+			
+			loadFeedsArray (function () {
+				loadLocalStorage (function () { //6/20/15 by DW
 					loadTodaysRiver (function () {
 						loadListsFromFolder (); //adds tasks to the queue
 						http.createServer (handleRequest).listen (myPort);
@@ -3162,7 +3143,6 @@ function startup () {
 						everyMinute (); //it schedules its own next run
 						});
 					});
-				
 				});
 			});
 		});

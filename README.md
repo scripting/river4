@@ -11,6 +11,7 @@ If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups
 
 ####Up and running with Docker
 If you have docker installed, you can run river4 with the following commands:
+
     # build the docker image
     docker build -t river4 .
     

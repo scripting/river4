@@ -54,6 +54,10 @@ Specifically thanks to Dan for writing the excellent <a href="https://github.com
 
 #### Changes
 
+##### v0.116 -- 7/4/15 by DW
+
+The home page of the River4 server now shows you the rivers being maintained by the server. There's a menu that links to the dashboard, the blog, mail list, and GitHub repo.
+
 ##### v0.115 -- 6/21/15 by DW
 
 New feature: <a href="https://github.com/scripting/river4/wiki/How-callbacks-work-in-River4">Callback scripts</a> that run when River4 adds an item to the river. 

@@ -1,4 +1,4 @@
-var myVersion = "0.115f", myProductName = "River4", flRunningOnServer = true; 
+var myVersion = "0.116a", myProductName = "River4", flRunningOnServer = true; 
  
 
 var http = require ("http"); 
@@ -35,6 +35,7 @@ var myPort = Number (process.env.PORT || 1337);
 
 var urlIndexSource = "http://fargo.io/code/river4/river4homepage.html";
 var urlDashboardSource = "http://fargo.io/code/river4/dashboard.html";
+var urlServerHomePageSource = "http://fargo.io/code/river4/serverhomepage.html"; //what you get when you go to / on the server
 
 var whenServerStart = new Date ();
 var ct = 0, secsLastInit = 0;
@@ -2875,6 +2876,14 @@ function handleRequest (httpRequest, httpResponse) {
 		switch (httpRequest.method) {
 			case "GET":
 				switch (lowerpath) {
+					case "/": //7/4/15 by DW
+						httpResponse.writeHead (200, {"Content-Type": "text/html"});
+						request (urlServerHomePageSource, function (error, response, htmltext) {
+							if (!error && response.statusCode == 200) {
+								httpResponse.end (htmltext);    
+								}
+							});
+						break;
 					case "/version":
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 						httpResponse.end (myVersion);    
@@ -2940,7 +2949,6 @@ function handleRequest (httpRequest, httpResponse) {
 							readFeed (url);
 							}
 						break;
-					
 					case "/getlistnames": //11/11/14 by DW
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 						httpResponse.end (jsonStringify (serverData.stats.listNames));    

@@ -9,6 +9,21 @@ We have a <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">
 
 If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">support mail list</a>, with people who have successfully set up and are running River4 installations. If you're having trouble, this is the place to go.
 
+####Up and running with Docker
+If you have docker installed, you can run river4 with the following commands:
+
+    # build the docker image
+    docker build -t river4 .
+    
+    # make the folder to hold river4data
+    mkdir -pv $HOME/river4data/lists
+    
+    # copy an opml subscription list
+    cp $HOME/opml/feeds.opml $HOME/river4data/lists
+    
+    # start the app
+    docker run -it -v "$HOME/river4Data":/var/river4 -P --rm --name river4 river4
+
 ####Installing the software
 
 There are two howto's:

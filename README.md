@@ -9,21 +9,6 @@ We have a <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">
 
 If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">support mail list</a>, with people who have successfully set up and are running River4 installations. If you're having trouble, this is the place to go.
 
-####Up and running with Docker
-If you have docker installed, you can run river4 with the following commands:
-
-    # build the docker image
-    docker build -t river4 .
-    
-    # make the folder to hold river4data
-    mkdir -pv $HOME/river4data/lists
-    
-    # copy an opml subscription list
-    cp $HOME/opml/feeds.opml $HOME/river4data/lists
-    
-    # start the app
-    docker run -it -v "$HOME/river4Data":/var/river4 -P --rm --name river4 river4
-
 ####Installing the software
 
 There are two howto's:
@@ -33,6 +18,8 @@ There are two howto's:
 2. Or, <a href="http://river4.smallpict.com/2014/10/17/usingRiver4WithS3Storage.html">using Amazon S3</a> for storage.
 
 The first option is easier, and often less expensive. However, if you're running River4 on a service like Heroku, you can't rely on the local file system for persistent storage, so we built River4 to work with S3 as well. On Heroku, which runs in the Amazon cloud, access to S3 storage is free.
+
+There is also an experimental Docker installer. Notes about using it are <a href="https://github.com/scripting/river4/wiki/Installing-with-Docker">on the wiki</a>. 
 
 
 #### Notes

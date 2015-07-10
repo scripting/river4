@@ -19,6 +19,8 @@ There are two howto's:
 
 The first option is easier, and often less expensive. However, if you're running River4 on a service like Heroku, you can't rely on the local file system for persistent storage, so we built River4 to work with S3 as well. On Heroku, which runs in the Amazon cloud, access to S3 storage is free.
 
+#### Docker
+
 There is also an experimental Docker installer. Notes about using it are <a href="https://github.com/scripting/river4/wiki/Installing-with-Docker">on the wiki</a>. 
 
 

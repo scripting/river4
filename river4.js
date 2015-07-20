@@ -1,5 +1,28 @@
-var myVersion = "0.116a", myProductName = "River4", flRunningOnServer = true; 
- 
+var myVersion = "0.117a", myProductName = "River4"; 
+
+/*  The MIT License (MIT)
+	Copyright (c) 2014-2015 Dave Winer
+	
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+	
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+	
+	structured listing: http://scripting.com/listings/river4.html
+	*/
 
 var http = require ("http"); 
 var https = require ("https");
@@ -36,6 +59,7 @@ var myPort = Number (process.env.PORT || 1337);
 var urlIndexSource = "http://fargo.io/code/river4/river4homepage.html";
 var urlDashboardSource = "http://fargo.io/code/river4/dashboard.html";
 var urlServerHomePageSource = "http://fargo.io/code/river4/serverhomepage.html"; //what you get when you go to / on the server
+var urlFavicon = "http://fargo.io/favicon.ico"; //7/19/15 by DW
 
 var whenServerStart = new Date ();
 var ct = 0, secsLastInit = 0;
@@ -357,6 +381,9 @@ function stringContains (s, whatItMightContain, flUnicase) { //11/9/14 by DW
 	return (s.indexOf (whatItMightContain) != -1);
 	}
 function beginsWith (s, possibleBeginning, flUnicase) { 
+	if (s === undefined) { //7/15/15 by DW
+		return (false);
+		}
 	if (s.length == 0) { //1/1/14 by DW
 		return (false);
 		}
@@ -593,13 +620,14 @@ function jsonStringify (jstruct, flFixBreakage) { //7/30/14 by DW
 function stringAddCommas (x) { //5/27/14 by DW
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}
-function readHttpFile (url, callback, timeoutInMilliseconds) { //5/27/14 by DW
+function readHttpFile (url, callback, timeoutInMilliseconds, headers) { //5/27/14 by DW xxx
 	if (timeoutInMilliseconds === undefined) {
 		timeoutInMilliseconds = 30000;
 		}
 	var jxhr = $.ajax ({ 
 		url: url,
-		dataType: "text" , 
+		dataType: "text", 
+		headers: headers,
 		timeout: timeoutInMilliseconds 
 		}) 
 	.success (function (data, status) { 
@@ -704,16 +732,16 @@ function hotUpText (s, url) { //7/18/14 by DW
 	s = leftpart + linktext + rightpart;
 	return (s);
 	}
+function getDomainFromUrl (url) { //7/11/15 by DW
+	if ((url != null ) && (url != "")) {
+		url = url.replace("www.","").replace("www2.", "").replace("feedproxy.", "").replace("feeds.", "");
+		var root = url.split('?')[0]; // cleans urls of form http://domain.com?a=1&b=2
+		url = root.split('/')[2];
+		}
+	return (url);
+	};
 function getFavicon (url) { //7/18/14 by DW
-	function getDomain (url) {
-		if ((url != null ) && (url != "")) {
-			url = url.replace("www.","").replace("www2.", "").replace("feedproxy.", "").replace("feeds.", "");
-			var root = url.split('?')[0]; // cleans urls of form http://domain.com?a=1&b=2
-			var url = root.split('/')[2];
-			}
-		return (url);
-		};
-	var domain = getDomain (url);
+	var domain = getDomainFromUrl (url);
 	return ("http://www.google.com/s2/favicons?domain=" + domain);
 	};
 function getURLParameter (name) { //7/21/14 by DW
@@ -1193,7 +1221,7 @@ function qRunNextTask () { //run the task at the beginning of array
 	}
 
  
-var riverCache = new Object (), flUseRiverCache = false;
+var riverCache = new Object (), flUseRiverCache = false, flRunningOnServer = true;
 
 function clearBuildRiverCache () {
 	riverCache = new Object ();
@@ -1493,7 +1521,6 @@ var localStorage = {
 var lastLocalStorageJson;
 
 function loadLocalStorage (callback) {
-	console.log ("loadLocalStorage: " + s3LocalStoragePath);
 	stGetObject (s3LocalStoragePath, function (error, data) {
 		if (!error) {
 			localStorage = parseJson (data.Body, s3LocalStoragePath);
@@ -1581,7 +1608,9 @@ function callAddToRiverCallbacks (urlfeed, itemFromParser, itemFromRiver) {
 		}
 	function stListObjects (path, callback) {
 		if (fspath != undefined) {
-			fsListObjects (path, callback);
+			fsSureFilePath (path, function () { //7/19/15 by DW -- create the folder if it doesn't exist
+				fsListObjects (path, callback);
+				});
 			}
 		else {
 			s3ListObjects (path, callback);
@@ -1627,7 +1656,6 @@ function countHttpSockets () {
 	}
 function loadTodaysRiver (callback) {
 	var s3path = getCalendarPath (dayRiverCovers);
-	console.log ("loadTodaysRiver: " + s3path);
 	stGetObject (s3path, function (error, data) {
 		if (!error) {
 			todaysRiver = parseJson (data.Body, s3path);
@@ -1794,10 +1822,11 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 	}
 
 function loadServerData (callback) {
-	console.log ("loadServerData: " + s3PrefsAndStatsPath);
 	stGetObject (s3PrefsAndStatsPath, function (error, data) {
 		if (error) {
-			console.log ("loadServerData: error == " + error.message);
+			if (!beginsWith (error.message, "ENOENT")) { //7/19/15 by DW
+				console.log ("loadServerData: error == " + error.message);
+				}
 			}
 		else {
 			var oldServerData = parseJson (data.Body, s3PrefsAndStatsPath);
@@ -2729,7 +2758,6 @@ function copyIndexFile () { //6/1/14 by DW
 				request (urlIndexSource, function (error, response, htmltext) {
 					if (!error && response.statusCode == 200) {
 						stNewObject (s3IndexFile, htmltext, "text/html", s3defaultAcl, function (error, data) {
-							console.log ("copyIndexFile: " + s3IndexFile);
 							});
 						}
 					});
@@ -2793,7 +2821,7 @@ function everyMinute () {
 			enabledMessage = " server is not enabled.";
 			}
 		
-		console.log (""); console.log ("everyMinute: " + now.toLocaleTimeString () + ", " + qSize () + " items on the task queue, " + serverData.stats.ctHttpSockets  + " sockets open, " + feedsArray.length + " feeds." + enabledMessage + " v" + myVersion);
+		console.log ("\neveryMinute: " + now.toLocaleTimeString () + ", " + qSize () + " items on the task queue, " + serverData.stats.ctHttpSockets  + " sockets open, " + feedsArray.length + " feeds." + enabledMessage + " v" + myVersion);
 		
 		clearBuildRiverCache ();
 		
@@ -2836,7 +2864,6 @@ function everyFiveMinutes () {
 	if (serverData.prefs.enabled) {
 		buildAllRivers ();
 		buildRiversArray ();
-		copyIndexFile (); //6/1/14 by DW
 		}
 	}
 
@@ -3003,7 +3030,10 @@ function handleRequest (httpRequest, httpResponse) {
 						httpResponse.writeHead (200, {"Content-Type": "text/plain"});
 						httpResponse.end (challenge);    
 						break;
-					
+					case "/favicon.ico": //7/19/15 by DW
+						httpResponse.writeHead (302, {"location": urlFavicon, "Content-Type": "text/plain"});
+						httpResponse.end ("302 REDIRECT");    
+						break;
 					default: //404 not found
 						httpResponse.writeHead (404, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 						httpResponse.end ("\"" + lowerpath + "\" is not one of the endpoints defined by this server.");
@@ -3107,17 +3137,17 @@ function startup () {
 		s3defaultAcl = process.env.s3defaultAcl;
 		}
 	loadConfig (function () {
-		console.log (""); console.log (""); console.log (""); 
-		console.log (myProductName + " v" + myVersion + " running on port " + myPort + ".");
-		console.log (""); 
-		
-		if (remotePassword === undefined) { //12/4/14 by DW
-			remotePassword = "";
+		if ((s3path === undefined) && (fspath === undefined)) { //7/19/15 by DW
+			fspath = "river4data/";
 			}
 		if (fspath !== undefined) { //9/24/14 by DW
-			console.log ("Running from the filesystem: " + fspath);
-			console.log (""); 
 			s3path = fspath; 
+			}
+		//display startup message
+			var pathmsg = (fspath === undefined) ? ("s3 path == " + s3path) : ("file path == " + fspath);
+			console.log ("\n" + myProductName + " v" + myVersion + " running on port " + myPort + ", " + pathmsg);
+		if (remotePassword === undefined) { //12/4/14 by DW
+			remotePassword = "";
 			}
 		s3UserListsPath = s3path + "lists/"; //where users store their lists
 		s3UserRiversPath = s3path + "rivers/"; //where we store their rivers
@@ -3134,7 +3164,6 @@ function startup () {
 		
 		loadServerData (function () {
 			applyPrefs ();
-			copyIndexFile (); //6/1/14 by DW
 			
 			
 			saveServerData (); //so hours-server-up stats update immediately
@@ -3143,10 +3172,17 @@ function startup () {
 				loadLocalStorage (function () { //6/20/15 by DW
 					loadTodaysRiver (function () {
 						loadListsFromFolder (); //adds tasks to the queue
+						//make sure all the top level folders are created -- 7/19/15 by DW
+							if (fspath !== undefined) {
+								fsSureFilePath (s3UserRiversPath, function () {
+									fsSureFilePath (s3UserListsPath, function () {
+										});
+									});
+								}
 						http.createServer (handleRequest).listen (myPort);
-						setInterval (function () {everySecond ()}, 1000); 
-						setInterval (function () {everyQuarterSecond ()}, 250);
-						setInterval (function () {everyFiveMinutes ()}, 300000); 
+						setInterval (everySecond, 1000); 
+						setInterval (everyQuarterSecond, 250);
+						setInterval (everyFiveMinutes, 300000); 
 						
 						everyMinute (); //it schedules its own next run
 						});

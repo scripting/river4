@@ -1,44 +1,32 @@
-river4
-======
+#### River4
 
 River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">river-of-news</a> aggregator that stores its lists and data in the local file system or Amazon S3.
 
-####Overview
+#### Overview
 
 We have a <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">press backgrounder</a> for River4 here. If you're wondering what it is, or why it's significant, this is the first place to go.
 
 If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">support mail list</a>, with people who have successfully set up and are running River4 installations. If you're having trouble, this is the place to go.
 
-####Installing the software
+#### Installing River4
 
-There are two howto's:
+Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">instructions</a> for setting up River4 on a Unix machine or a Macintosh, using the local file system for storage.
 
-1. Setting up River4 <a href="http://river4.smallpict.com/2014/09/25/bareBonesRiver4Howto.html">using the local file system</a> for storage.
+#### Installing on Amazon S3, Heroku
 
-2. Or, <a href="http://river4.smallpict.com/2014/10/17/usingRiver4WithS3Storage.html">using Amazon S3</a> for storage.
+When we started developing River4, we were targeting Heroku, because it was so easy and inexpensive to start with. They have since <a href="http://scripting.com/2015/05/12/whyIMovedOffHeroku.html">changed</a> their pricing, so it's not as attractive, so we're now recommending the filesystem configuration, above. 
 
-The first option is easier, and often less expensive. However, if you're running River4 on a service like Heroku, you can't rely on the local file system for persistent storage, so we built River4 to work with S3 as well. On Heroku, which runs in the Amazon cloud, access to S3 storage is free.
+1. The <a href="http://river4.smallpict.com/2014/10/17/usingRiver4WithS3Storage.html">howto</a> with instructions for installing River4 using Amazon S3 for storage. 
 
-#### Docker
+3. <a href="http://scripting.com/2014/02/06/herokuForPoetsBeta.html">Heroku How To</a> -- get a Heroku server running with <a href="https://github.com/scripting/fargoPublisher">Fargo Publisher</a>, the back-end for <a href="http://fargo.io/">Fargo</a>. 
 
-There is also an experimental Docker installer. Notes about using it are <a href="https://github.com/scripting/river4/wiki/Installing-with-Docker">on the wiki</a>. 
-
-
-#### Notes
-
-1. I edit code in an outliner, which is then turned into JavaScript. The "opml" folder in the repository contains the versions of the code that I edit. The comments are stripped out of the code before it's converted to raw JS, so there is information for developers in the OPML that isn't in the main files (though all the running code is in both).
-
-2. The first released version is 0.79. They will increment by one one-hundredth every release. At some point I'll call it 1.0, then subsequent releases will be 1.01, 1.02 etc.
+4. <a href="http://scripting.com/2014/04/20/barebonesHerokuDo.html">Bare-bones Heroku do</a> -- checklist for setting up a Heroku server running Node.js from a Mac desktop.
 
 #### Links
 
 1. <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">What is a River of News aggregator?</a>
 
 2. <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">Why every news organization should have a river</a>.
-
-3. <a href="http://scripting.com/2014/02/06/herokuForPoetsBeta.html">Heroku How To</a> -- get a Heroku server running with <a href="https://github.com/scripting/fargoPublisher">Fargo Publisher</a>, the back-end for <a href="http://fargo.io/">Fargo</a>. 
-
-4. <a href="http://scripting.com/2014/04/20/barebonesHerokuDo.html">Bare-bones Heroku do</a> -- checklist for setting up a Heroku server running Node.js from a Mac desktop.
 
 5. <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">Welcome to River4</a>.
 
@@ -50,13 +38,27 @@ There is also an experimental Docker installer. Notes about using it are <a href
 
 9. The <a href="http://river4.smallpict.com/2014/10/05/theHelloWorldOfRivers.html">Hello World</a> of Rivers.
 
-#### Thanks!
+#### Docker
 
-Thanks to two developer friends, Dan MacTough and Eric Kidd, who helped this Node.js newbie get this app up and running. 
+There is also an experimental Docker installer. Notes about using it are <a href="https://github.com/scripting/river4/wiki/Installing-with-Docker">on the wiki</a>. 
 
-Specifically thanks to Dan for writing the excellent <a href="https://github.com/danmactough/node-feedparser">feedparser</a> and <a href="https://github.com/danmactough/node-opmlparser">opmlparser</a> packages that are incorporated in River4. 
+#### Updates
 
-#### Changes
+##### v0.117 -- 7/20/15 by DW
+
+Lots of small changes to make River4 easier to setup for newbies. ;-)
+
+1. If you haven't set any path variables, or set up config.json, River4 will run with the data stored in a river4data sub-folder of the folder containing river4.js.
+
+2. We don't announce each step of the startup process on the console. 
+
+3. If there's an ENOENT error reading prefsAndStats.json, we don't report the error. It's not actually an error, since River4 automatically creates the file the first time it runs. This confused a lot of users, unnecessarily. 
+
+4. We create the <i>lists</i> folder automatically. 
+
+5. We no longer install an index.html file in the river4data folder. The file we installed didn't actually work, and it's no longer necessary since the <a href="http://localhost:1337/">home page</a> of the server is now a perfectly good way to browse the rivers on the server.
+
+5. Re-wrote the howto for setup, eliminating two complicated and potentially error-prone steps. The new howto is <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">here</a>. The old howto is still there but with a big bold statement at the top saying you should use the new one. 
 
 ##### v0.116 -- 7/4/15 by DW
 
@@ -118,7 +120,6 @@ Two fixes for local file system use. 1. Only read lists whose names end with .op
 
 Apparently there was a change in format in the FeedParser module, in the way it represents &lt;source:outline> elements. This release handles the change in format so outlines now pass through in a way that's understandable to the RiverBrowser software.
 
-
 ##### v0.96 -- 9/24/14 by DW
 
 This version can be configured to store its data in the local filesystem instead of S3. See the <a href="http://river4.smallpict.com/2014/09/24/river4WorksWithLocalFilesystem.html">blog post</a> for details.
@@ -126,7 +127,6 @@ This version can be configured to store its data in the local filesystem instead
 ##### v0.95 -- 9/11/14 by DW
 
 New /ping endpoint, available to be called by a publisher, on behalf of a user, to indicate that a feed has updated, and should be read immediately. <a href="http://radio3.smallpict.com/2014/09/11/radio3053HasASimpleApi.html">Radio3</a> has this facility as of today, as does Fargo. 
-
 
 ##### v0.94 -- 8/6/14 by DW
 
@@ -188,4 +188,19 @@ You'll get a real-time readout of what your aggregator is doing.
 
 The HTML source for the dashboard page is in dashboard.opml in the opml folder in the repository.
 
+#### Thanks!
+
+Thanks to two developer friends, Dan MacTough and Eric Kidd, who helped this Node.js newbie get this app up and running. 
+
+Specifically thanks to Dan for writing the excellent <a href="https://github.com/danmactough/node-feedparser">feedparser</a> and <a href="https://github.com/danmactough/node-opmlparser">opmlparser</a> packages that are incorporated in River4. 
+
+#### Notes
+
+1. I edit code in an outliner, which is then turned into JavaScript. The "opml" folder in the repository contains the versions of the code that I edit. The comments are stripped out of the code before it's converted to raw JS, so there is information for developers in the OPML that isn't in the main files (though all the running code is in both).
+
+2. The first released version is 0.79. They will increment by one one-hundredth every release. At some point I'll call it 1.0, then subsequent releases will be 1.01, 1.02 etc.
+
+#### Questions, comments?
+
+Please post a note on the <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">River4</a> mail list. 
 

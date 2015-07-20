@@ -20,10 +20,6 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 9. The <a href="http://river4.smallpict.com/2014/10/05/theHelloWorldOfRivers.html">Hello World</a> of Rivers.
 
-#### Docker
-
-There is also an experimental Docker installer. Notes about using it are <a href="https://github.com/scripting/river4/wiki/Installing-with-Docker">on the wiki</a>. 
-
 #### Updates
 
 ##### v0.117 -- 7/20/15 by DW
@@ -169,6 +165,10 @@ New "dashboard" feature. If your server is running at aggregator.mydomain.com, i
 You'll get a real-time readout of what your aggregator is doing. 
 
 The HTML source for the dashboard page is in dashboard.opml in the opml folder in the repository.
+
+#### Docker
+
+There is an experimental Docker installer. Notes about using it are <a href="https://github.com/scripting/river4/wiki/Installing-with-Docker">on the wiki</a>. 
 
 #### Amazon S3, Heroku
 

@@ -12,16 +12,6 @@ If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups
 
 Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">instructions</a> for setting up River4 on a Unix machine or a Macintosh, using the local file system for storage.
 
-#### Installing on Amazon S3, Heroku
-
-When we started developing River4, we were targeting Heroku, because it was so easy and inexpensive to start with. They have since <a href="http://scripting.com/2015/05/12/whyIMovedOffHeroku.html">changed</a> their pricing, so it's not as attractive, so we're now recommending the filesystem configuration, above. 
-
-1. The <a href="http://river4.smallpict.com/2014/10/17/usingRiver4WithS3Storage.html">howto</a> with instructions for installing River4 using Amazon S3 for storage. 
-
-3. <a href="http://scripting.com/2014/02/06/herokuForPoetsBeta.html">Heroku How To</a> -- get a Heroku server running with <a href="https://github.com/scripting/fargoPublisher">Fargo Publisher</a>, the back-end for <a href="http://fargo.io/">Fargo</a>. 
-
-4. <a href="http://scripting.com/2014/04/20/barebonesHerokuDo.html">Bare-bones Heroku do</a> -- checklist for setting up a Heroku server running Node.js from a Mac desktop.
-
 #### Links
 
 1. <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">What is a River of News aggregator?</a>
@@ -187,6 +177,16 @@ New "dashboard" feature. If your server is running at aggregator.mydomain.com, i
 You'll get a real-time readout of what your aggregator is doing. 
 
 The HTML source for the dashboard page is in dashboard.opml in the opml folder in the repository.
+
+#### Amazon S3, Heroku
+
+When we started developing River4, we were targeting Heroku, because it was so easy and inexpensive to start with. They have since <a href="http://scripting.com/2015/05/12/whyIMovedOffHeroku.html">changed</a> their pricing, so it's not as attractive, so we're now recommending the filesystem configuration, above. 
+
+1. The <a href="http://river4.smallpict.com/2014/10/17/usingRiver4WithS3Storage.html">howto</a> with instructions for installing River4 using Amazon S3 for storage. 
+
+3. <a href="http://scripting.com/2014/02/06/herokuForPoetsBeta.html">Heroku How To</a> -- get a Heroku server running with <a href="https://github.com/scripting/fargoPublisher">Fargo Publisher</a>, the back-end for <a href="http://fargo.io/">Fargo</a>. 
+
+4. <a href="http://scripting.com/2014/04/20/barebonesHerokuDo.html">Bare-bones Heroku do</a> -- checklist for setting up a Heroku server running Node.js from a Mac desktop.
 
 #### Thanks!
 

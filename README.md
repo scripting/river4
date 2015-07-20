@@ -2,29 +2,21 @@
 
 River4 is a node.js <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">river-of-news</a> aggregator that stores its lists and data in the local file system or Amazon S3.
 
-#### Overview
+#### How to
 
-We have a <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">press backgrounder</a> for River4 here. If you're wondering what it is, or why it's significant, this is the first place to go.
-
-If you need help, we have a <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">support mail list</a>, with people who have successfully set up and are running River4 installations. If you're having trouble, this is the place to go.
-
-#### Installing River4
-
-Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">instructions</a> for setting up River4 on a Unix machine or a Macintosh, using the local file system for storage.
+Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">instructions</a> for setting up River4 on a system running Node.js, using the local file system for storage.
 
 #### Links
+
+1. <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">Welcome to River4</a>. 
 
 1. <a href="http://scripting.com/2014/06/02/whatIsARiverOfNewsAggregator.html">What is a River of News aggregator?</a>
 
 2. <a href="http://www.niemanlab.org/2012/03/dave-winer-heres-why-every-news-organization-should-have-a-river/">Why every news organization should have a river</a>.
 
-5. <a href="http://river4.smallpict.com/2014/06/04/welcomeToRiver4.html">Welcome to River4</a>.
-
 6. The River4 support <a href="https://groups.google.com/forum/?fromgroups#!forum/river4">mail list</a>. 
 
 7. <a href="http://scripting.com/2014/03/19/howToAskForHelpWithSoftware.html">How to ask for help with software</a>.
-
-8. Chris Dadswell wrote a <a href="http://scriven.chrisdadswell.co.uk/users/scriven/articles/howToSetupAFargoRiverOfNews.html">tutorial</a> for setting up your own River4 installation. 
 
 9. The <a href="http://river4.smallpict.com/2014/10/05/theHelloWorldOfRivers.html">Hello World</a> of Rivers.
 

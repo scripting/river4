@@ -26,17 +26,19 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 Lots of small changes to make River4 easier to setup for newbies. ;-)
 
-1. If you haven't set any path variables, or set up config.json, River4 will run with the data stored in a river4data sub-folder of the folder containing river4.js.
+1. If you haven't set any path variables, or set up config.json, River4 will run with the data stored in a river4data sub-folder of the folder containing river4.js, which it automatically creates.
 
 2. We don't announce each step of the startup process on the console. 
 
-3. If there's an ENOENT error reading prefsAndStats.json, we don't report the error. It's not actually an error, since River4 automatically creates the file the first time it runs. This confused a lot of users, unnecessarily. 
+3. If there's an ENOENT error reading prefsAndStats.json, we don't report an error, since River4 automatically creates the file the first time it runs. This confused some users, unnecessarily. 
 
 4. We create the <i>lists</i> folder automatically. 
 
 5. We no longer install an index.html file in the river4data folder. The file we installed didn't actually work, and it's no longer necessary since the <a href="http://localhost:1337/">home page</a> of the server is now a perfectly good way to browse the rivers on the server.
 
-5. Re-wrote the howto for setup, eliminating two complicated and potentially error-prone steps. The new howto is <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">here</a>. The old howto is still there but with a big bold statement at the top saying you should use the new one. 
+5. Re-wrote the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">howto for setup</a>, eliminating two complicated and potentially error-prone steps. The old howto is still there but with a  bold statement at the top saying you should use the new one. 
+
+6. There's a <a href="http://river4.smallpict.com/2015/07/20/videoInstallingRiver4OnAMac.html">15-minute video</a> that shows how to set up a River4 installation.
 
 ##### v0.116 -- 7/4/15 by DW
 

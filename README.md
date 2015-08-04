@@ -20,6 +20,10 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 9. The <a href="http://river4.smallpict.com/2014/10/05/theHelloWorldOfRivers.html">Hello World</a> of Rivers.
 
+10. <a href="http://river4.smallpict.com/2015/08/04/editingSubscriptionLists.html">Editing subscription lists</a>. 
+
+11. <a href="http://river4.smallpict.com/2015/08/04/installingRiver4OnUbuntu.html">Installing River4 on Ubuntu</a>.
+
 #### Updates
 
 ##### v0.117 -- 7/20/15 by DW

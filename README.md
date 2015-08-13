@@ -26,6 +26,12 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 #### Updates
 
+##### v0.118 -- 8/13/15 by DW
+
+Now handles feeds whose address begins with feed://. We just translate it to http://. Previously there would be an error reading the feed.
+
+Also created a module, utils.js, instead of including the source in the main body of river.js. River4 was the first Node app I shipped, I've since learned how to modularize Node apps. 
+
 ##### v0.117 -- 7/20/15 by DW
 
 Lots of small changes to make River4 easier to setup for newbies. ;-)

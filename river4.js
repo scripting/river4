@@ -1,4 +1,4 @@
-var myVersion = "0.117a", myProductName = "River4"; 
+var myVersion = "0.118d", myProductName = "River4"; 
 
 /*  The MIT License (MIT)
 	Copyright (c) 2014-2015 Dave Winer
@@ -36,6 +36,7 @@ var urlpack = require ("url");
 var util = require ("util");
 var fs = require ("fs");
 var qs = require ("querystring");
+var utils = require ("./lib/utils.js"); //8/13/15 by DW
 
 var fspath = process.env.fspath; //9/24/14 by DW
 var remotePassword = process.env.password; //12/4/14 by DW
@@ -264,928 +265,6 @@ function s3ListObjects (path, callback) {
 
 
 
-function sameDay (d1, d2) { 
-	//returns true if the two dates are on the same day
-	d1 = new Date (d1);
-	d2 = new Date (d2);
-	return ((d1.getFullYear () == d2.getFullYear ()) && (d1.getMonth () == d2.getMonth ()) && (d1.getDate () == d2.getDate ()));
-	}
-function dayGreaterThanOrEqual (d1, d2) { //9/2/14 by DW
-	d1 = new Date (d1);
-	d1.setHours (0);
-	d1.setMinutes (0);
-	d1.setSeconds (0);
-	
-	d2 = new Date (d2);
-	d2.setHours (0);
-	d2.setMinutes (0);
-	d2.setSeconds (0);
-	
-	return (d1 >= d2);
-	}
-function stringLower (s) {
-	if (s === undefined) { //1/26/15 by DW
-		return ("");
-		}
-	s = s.toString (); //1/26/15 by DW
-	return (s.toLowerCase ());
-	}
-function secondsSince (when) { 
-	var now = new Date ();
-	when = new Date (when);
-	return ((now - when) / 1000);
-	}
-function padWithZeros (num, ctplaces) { 
-	var s = num.toString ();
-	while (s.length < ctplaces) {
-		s = "0" + s;
-		}
-	return (s);
-	}
-function getDatePath (theDate, flLastSeparator) {
-	if (theDate === undefined) {
-		theDate = new Date ();
-		}
-	else {
-		theDate = new Date (theDate); //8/12/14 by DW -- make sure it's a date type
-		}
-	if (flLastSeparator === undefined) {
-		flLastSeparator = true;
-		}
-	
-	var month = padWithZeros (theDate.getMonth () + 1, 2);
-	var day = padWithZeros (theDate.getDate (), 2);
-	var year = theDate.getFullYear ();
-	
-	if (flLastSeparator) {
-		return (year + "/" + month + "/" + day + "/");
-		}
-	else {
-		return (year + "/" + month + "/" + day);
-		}
-	}
-function multipleReplaceAll (s, adrTable, flCaseSensitive, startCharacters, endCharacters) { 
-	if(flCaseSensitive===undefined){
-		flCaseSensitive = false;
-		}
-	if(startCharacters===undefined){
-		startCharacters="";
-		}
-	if(endCharacters===undefined){
-		endCharacters="";
-		}
-	for( var item in adrTable){
-		var replacementValue = adrTable[item];
-		var regularExpressionModifier = "g";
-		if(!flCaseSensitive){
-			regularExpressionModifier = "gi";
-			}
-		var regularExpressionString = (startCharacters+item+endCharacters).replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
-		var regularExpression = new RegExp(regularExpressionString, regularExpressionModifier);
-		s = s.replace(regularExpression, replacementValue);
-		}
-	return s;
-	}
-function endsWith (s, possibleEnding, flUnicase) {
-	if ((s === undefined) || (s.length == 0)) { 
-		return (false);
-		}
-	var ixstring = s.length - 1;
-	if (flUnicase === undefined) {
-		flUnicase = true;
-		}
-	if (flUnicase) {
-		for (var i = possibleEnding.length - 1; i >= 0; i--) {
-			if (stringLower (s [ixstring--]) != stringLower (possibleEnding [i])) {
-				return (false);
-				}
-			}
-		}
-	else {
-		for (var i = possibleEnding.length - 1; i >= 0; i--) {
-			if (s [ixstring--] != possibleEnding [i]) {
-				return (false);
-				}
-			}
-		}
-	return (true);
-	}
-function stringContains (s, whatItMightContain, flUnicase) { //11/9/14 by DW
-	if (flUnicase === undefined) {
-		flUnicase = true;
-		}
-	if (flUnicase) {
-		s = s.toLowerCase ();
-		whatItMightContain = whatItMightContain.toLowerCase ();
-		}
-	return (s.indexOf (whatItMightContain) != -1);
-	}
-function beginsWith (s, possibleBeginning, flUnicase) { 
-	if (s === undefined) { //7/15/15 by DW
-		return (false);
-		}
-	if (s.length == 0) { //1/1/14 by DW
-		return (false);
-		}
-	if (flUnicase === undefined) {
-		flUnicase = true;
-		}
-	if (flUnicase) {
-		for (var i = 0; i < possibleBeginning.length; i++) {
-			if (stringLower (s [i]) != stringLower (possibleBeginning [i])) {
-				return (false);
-				}
-			}
-		}
-	else {
-		for (var i = 0; i < possibleBeginning.length; i++) {
-			if (s [i] != possibleBeginning [i]) {
-				return (false);
-				}
-			}
-		}
-	return (true);
-	}
-function isAlpha (ch) {
-	return (((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A') && (ch <= 'Z')));
-	}
-function isNumeric (ch) {
-	return ((ch >= '0') && (ch <= '9'));
-	}
-function trimLeading (s, ch) {
-	while (s.charAt (0) === ch) {
-		s = s.substr (1);
-		}
-	return (s);
-	}
-function trimTrailing (s, ch) { 
-	while (s.charAt (s.length - 1) === ch) {
-		s = s.substr (0, s.length - 1);
-		}
-	return (s);
-	}
-function trimWhitespace (s) { //rewrite -- 5/30/14 by DW
-	function isWhite (ch) {
-		switch (ch) {
-			case " ": case "\r": case "\n": case "\t":
-				return (true);
-			}
-		return (false);
-		}
-	if (s === undefined) { //9/10/14 by DW
-		return ("");
-		}
-	while (isWhite (s.charAt (0))) {
-		s = s.substr (1);
-		}
-	while (s.length > 0) {
-		if (!isWhite (s.charAt (0))) {
-			break;
-			}
-		s = s.substr (1);
-		}
-	while (s.length > 0) {
-		if (!isWhite (s.charAt (s.length - 1))) {
-			break;
-			}
-		s = s.substr (0, s.length - 1);
-		}
-	return (s);
-	}
-function addPeriodAtEnd (s) {
-	s = trimWhitespace (s);
-	if (s.length == 0) {
-		return (s);
-		}
-	switch (s [s.length - 1]) {
-		case ".":
-		case ",":
-		case "?":
-		case "\"":
-		case "'":
-		case ":":
-		case ";":
-		case "!":
-			return (s);
-		default:
-			return (s + ".");
-		}
-	}
-function getBoolean (val) { //12/5/13 by DW
-	switch (typeof (val)) {
-		case "string":
-			if (val.toLowerCase () == "true") {
-				return (true);
-				}
-			break;
-		case "boolean":
-			return (val);
-		case "number":
-			if (val == 1) {
-				return (true);
-				}
-			break;
-		}
-	return (false);
-	}
-function bumpUrlString (s) { //5/10/14 by DW
-	if (s === undefined) {
-		s = "0";
-		}
-	function bumpChar (ch) {
-		function num (ch) {
-			return (ch.charCodeAt (0));
-			}
-		if ((ch >= "0") && (ch <= "8")) {
-			ch = String.fromCharCode (num (ch) + 1);
-			}
-		else {
-			if (ch == "9") {
-				ch = "a";
-				}
-			else {
-				if ((ch >= "a") && (ch <= "y")) {
-					ch = String.fromCharCode (num (ch) + 1);
-					}
-				else {
-					throw "rollover!";
-					}
-				}
-			}
-		return (ch);
-		}
-	try {
-		var chlast = bumpChar (s [s.length - 1]);
-		s = s.substr (0, s.length - 1) + chlast;
-		return (s);
-		}
-	catch (tryError) {
-		if (s.length == 1) {
-			return ("00");
-			}
-		else {
-			s = s.substr (0, s.length - 1);
-			s = bumpUrlString (s) + "0";
-			return (s);
-			}
-		}
-	}
-function stringDelete (s, ix, ct) {
-	var start = ix - 1;
-	var end = (ix + ct) - 1;
-	var s1 = s.substr (0, start);
-	var s2 = s.substr (end);
-	return (s1 + s2);
-	}
-function replaceAll (s, searchfor, replacewith) {
-	function escapeRegExp (string) {
-		return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-		}
-	return (s.replace (new RegExp (escapeRegExp (searchfor), 'g'), replacewith));
-	}
-function stringCountFields (s, chdelim) {
-	var ct = 1;
-	if (s.length == 0) {
-		return (0);
-		}
-	for (var i = 0; i < s.length; i++) {
-		if (s [i] == chdelim) {
-			ct++;
-			}
-		}
-	return (ct)
-	}
-function stringNthField (s, chdelim, n) {
-	var splits = s.split (chdelim);
-	if (splits.length >= n) {
-		return splits [n-1];
-		}
-	return ("");
-	}
-function dateYesterday (d) {
-	return (new Date (new Date (d) - (24 * 60 * 60 * 1000)));
-	}
-function stripMarkup (s) { //5/24/14 by DW
-	if ((s === undefined) || (s == null) || (s.length == 0)) {
-		return ("");
-		}
-	return (s.replace (/(<([^>]+)>)/ig, ""));
-	}
-function maxStringLength (s, len, flWholeWordAtEnd, flAddElipses) {
-	if (flWholeWordAtEnd === undefined) {
-		flWholeWordAtEnd = true;
-		}
-	if (flAddElipses === undefined) { //6/2/14 by DW
-		flAddElipses = true;
-		}
-	if (s.length > len) {
-		s = s.substr (0, len);
-		if (flWholeWordAtEnd) {
-			while (s.length > 0) {
-				if (s [s.length - 1] == " ") {
-					if (flAddElipses) {
-						s += "...";
-						}
-					break;
-					}
-				s = s.substr (0, s.length - 1); //pop last char
-				}
-			}
-		}
-	return (s);
-	}
-function random (lower, upper) {
-	var range = upper - lower + 1;
-	return (Math.floor ((Math.random () * range) + lower));
-	}
-function removeMultipleBlanks (s) { //7/30/14 by DW
-	return (s.toString().replace (/ +/g, " "));
-	}
-function jsonStringify (jstruct, flFixBreakage) { //7/30/14 by DW
-	//Changes
-		//6/16/15; 10:43:25 AM by DW
-			//Andrew Shell reported an issue in the encoding of JSON that's solved by doing character replacement. 
-			//However, this is too big a change to make for all the code that calls this library routine, so we added a boolean flag, flFixBreakage.
-			//If this proves to be harmless, we'll change the default to true. 
-			//http://river4.smallpict.com/2015/06/16/jsonEncodingIssueSolved.html
-	if (flFixBreakage === undefined) {
-		flFixBreakage = false;
-		}
-	var s = JSON.stringify (jstruct, undefined, 4);
-	if (flFixBreakage) {
-		s = s.replace (/\u2028/g,'\\u2028').replace (/\u2029/g,'\\u2029');
-		}
-	return (s);
-	}
-function stringAddCommas (x) { //5/27/14 by DW
-	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-	}
-function readHttpFile (url, callback, timeoutInMilliseconds, headers) { //5/27/14 by DW xxx
-	if (timeoutInMilliseconds === undefined) {
-		timeoutInMilliseconds = 30000;
-		}
-	var jxhr = $.ajax ({ 
-		url: url,
-		dataType: "text", 
-		headers: headers,
-		timeout: timeoutInMilliseconds 
-		}) 
-	.success (function (data, status) { 
-		callback (data);
-		}) 
-	.error (function (status) { 
-		console.log ("readHttpFile: url == " + url + ", error == " + jsonStringify (status));
-		callback (undefined);
-		});
-	}
-function readHttpFileThruProxy (url, type, callback) { //10/25/14 by DW
-	var urlReadFileApi = "http://pub2.fargo.io:5347/httpReadUrl";
-	if (type === undefined) {
-		type = "text/plain";
-		}
-	var jxhr = $.ajax ({ 
-		url: urlReadFileApi + "?url=" + encodeURIComponent (url) + "&type=" + encodeURIComponent (type),
-		dataType: "text" , 
-		timeout: 30000 
-		}) 
-	.success (function (data, status) { 
-		if (callback != undefined) {
-			callback (data);
-			}
-		}) 
-	.error (function (status) { 
-		console.log ("readHttpFileThruProxy: url == " + url + ", error == " + status.statusText + ".");
-		if (callback != undefined) {
-			callback (undefined);
-			}
-		});
-	}
-function stringPopLastField (s, chdelim) { //5/28/14 by DW
-	if (s.length == 0) {
-		return (s);
-		}
-	if (endsWith (s, chdelim)) {
-		s = stringDelete (s, s.length, 1);
-		}
-	while (s.length > 0) {
-		if (endsWith (s, chdelim)) {
-			return (stringDelete (s, s.length, 1));
-			}
-		s = stringDelete (s, s.length, 1);
-		}
-	return (s);
-	}
-function stringPopExtension (s) { //4/29/15 by DW
-	for (var i = s.length - 1; i >= 0; i--) {
-		if (s [i] == ".") {
-			return (stringMid (s, 1, i));
-			}
-		}
-	return (s);
-	}
-function filledString (ch, ct) { //6/4/14 by DW
-	var s = "";
-	for (var i = 0; i < ct; i++) {
-		s += ch;
-		}
-	return (s);
-	}
-function encodeXml (s) { //7/15/14 by DW
-	var charMap = {
-		'<': '&lt;',
-		'>': '&gt;',
-		'&': '&amp;',
-		'"': '&'+'quot;'
-		};
-	s = s.toString();
-	s = s.replace(/\u00A0/g, " ");
-	var escaped = s.replace(/[<>&"]/g, function(ch) {
-		return charMap [ch];
-		});
-	return escaped;
-	}
-function decodeXml (s) { //11/7/14 by DW
-	return (s.replace (/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'));
-	}
-function hotUpText (s, url) { //7/18/14 by DW
-	
-	if (url === undefined) { //makes it easier to call -- 3/14/14 by DW
-		return (s);
-		}
-	
-	function linkit (s) {
-		return ("<a href=\"" + url + "\" target=\"_blank\">" + s + "</a>");
-		}
-	var ixleft = s.indexOf ("["), ixright = s.indexOf ("]");
-	if ((ixleft == -1) || (ixright == -1)) {
-		return (linkit (s));
-		}
-	if (ixright < ixleft) {
-		return (linkit (s));
-		}
-	
-	var linktext = s.substr (ixleft + 1, ixright - ixleft - 1); //string.mid (s, ixleft, ixright - ixleft + 1);
-	linktext = "<a href=\"" + url + "\" target=\"_blank\">" + linktext + "</a>";
-	
-	var leftpart = s.substr (0, ixleft);
-	var rightpart = s.substr (ixright + 1, s.length);
-	s = leftpart + linktext + rightpart;
-	return (s);
-	}
-function getDomainFromUrl (url) { //7/11/15 by DW
-	if ((url != null ) && (url != "")) {
-		url = url.replace("www.","").replace("www2.", "").replace("feedproxy.", "").replace("feeds.", "");
-		var root = url.split('?')[0]; // cleans urls of form http://domain.com?a=1&b=2
-		url = root.split('/')[2];
-		}
-	return (url);
-	};
-function getFavicon (url) { //7/18/14 by DW
-	var domain = getDomainFromUrl (url);
-	return ("http://www.google.com/s2/favicons?domain=" + domain);
-	};
-function getURLParameter (name) { //7/21/14 by DW
-	return (decodeURI ((RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]));
-	}
-function urlSplitter (url) { //7/15/14 by DW
-	var pattern = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
-	var result = pattern.exec (url);
-	if (result == null) {
-		result = [];
-		result [5] = url;
-		}
-	var splitUrl = {
-		scheme: result [1],
-		host: result [3],
-		port: result [4],
-		path: result [5],
-		query: result [6],
-		hash: result [7]
-		};
-	return (splitUrl);
-	}
-function innerCaseName (text) { //8/12/14 by DW
-	var s = "", ch, flNextUpper = false;
-	text = stripMarkup (text); 
-	for (var i = 0; i < text.length; i++) {
-		ch = text [i];
-		if (isAlpha (ch) || isNumeric (ch)) { 
-			if (flNextUpper) {
-				ch = ch.toUpperCase ();
-				flNextUpper = false;
-				}
-			else {
-				ch = ch.toLowerCase ();
-				}
-			s += ch;
-			}
-		else {
-			if (ch == ' ') { 
-				flNextUpper = true;
-				}
-			}
-		}
-	return (s);
-	}
-function hitCounter (counterGroup, counterServer) { //8/12/14 by DW
-	var defaultCounterGroup = "scripting", defaultCounterServer = "http://counter2.fargo.io:5337/counter";
-	var thispageurl = location.href;
-	if (counterGroup === undefined) {
-		counterGroup = defaultCounterGroup;
-		}
-	if (counterServer === undefined) {
-		counterServer = defaultCounterServer;
-		}
-	if (thispageurl === undefined) {
-		thispageurl = "";
-		}
-	if (endsWith (thispageurl, "#")) {
-		thispageurl = thispageurl.substr (0, thispageurl.length - 1);
-		}
-	var jxhr = $.ajax ({
-		url: counterServer + "?group=" + encodeURIComponent (counterGroup) + "&referer=" + encodeURIComponent (document.referrer) + "&url=" + encodeURIComponent (thispageurl),
-		dataType: "jsonp",
-		jsonpCallback : "getData",
-		timeout: 30000
-		})
-	.success (function (data, status, xhr) {
-		console.log ("hitCounter: counter ping accepted by server, group == " + counterGroup + ", page url == " + thispageurl);
-		})
-	.error (function (status, textStatus, errorThrown) {
-		console.log ("hitCounter: counter ping error: " + textStatus);
-		});
-	}
-function stringMid (s, ix, len) { //8/12/14 by DW
-	return (s.substr (ix-1, len));
-	}
-function getCmdKeyPrefix () { //8/15/14 by DW
-	if (navigator.platform.toLowerCase ().substr (0, 3) == "mac") {
-		return ("&#8984;");
-		}
-	else {
-		return ("Ctrl+"); 
-		}
-	}
-function getRandomSnarkySlogan () { //8/15/14 by DW
-	var snarkySlogans = [
-		"Good for the environment.", 
-		"All baking done on premises.", 
-		"Still diggin!", 
-		"It's even worse than it appears.", 
-		"Ask not what the Internet can do for you...", 
-		"You should never argue with a crazy man.", 
-		"Welcome back my friends to the show that never ends.", 
-		"Greetings, citizen of Planet Earth. We are your overlords. :-)", 
-		"We don't need no stinkin rock stars.", 
-		"This aggression will not stand.", 
-		"Pay no attention to the man behind the curtain.", 
-		"Only steal from the best.", 
-		"Reallll soooon now...", 
-		"What a long strange trip it's been.", 
-		"Ask not what the Internet can do for you.", 
-		"When in doubt, blog.",
-		"Shut up and eat your vegetables.",
-		"Don't slam the door on the way out.",
-		"Yeah well, that's just, you know, like, your opinion, man.",
-		"So, it has come to this."
-		]
-	return (snarkySlogans [random (0, snarkySlogans.length - 1)]);
-	}
-function dayOfWeekToString (theDay) { //8/23/14 by DW
-	var weekday = [
-		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
-		];
-	return (weekday[theDay]);
-	}
-function viewDate (when, flShortDayOfWeek)  {  //8/23/14 by DW
-	var now = new Date ();
-	when = new Date (when);
-	if (sameDay (when, now))  { 
-		return (timeString (when, false)) //2/9/13 by DW;
-		}
-	else  { 
-		var oneweek = 1000 * 60 * 60 * 24 * 7;
-		var cutoff = now - oneweek;
-		if (when > cutoff)   { //within the last week
-			var s = dayOfWeekToString (when.getDay ());
-			if (flShortDayOfWeek)  { 
-				s = s.substring (0, 3);
-				}
-			return (s);
-			}
-		else  { 
-			return (when.toLocaleDateString ());
-			}
-		}
-	}
-function timeString (when, flIncludeSeconds) { //8/26/14 by DW
-	var hour = when.getHours (), minutes = when.getMinutes (), ampm = "AM", s;
-	if (hour >= 12) {
-		ampm = "PM";
-		}
-	if (hour > 12) {
-		hour -= 12;
-		}
-	if (hour == 0) {
-		hour = 12;
-		}
-	if (minutes < 10) {
-		minutes = "0" + minutes;
-		}
-	if (flIncludeSeconds) { 
-		var seconds = when.getSeconds ();
-		if (seconds < 10) {
-			seconds = "0" + seconds;
-			}
-		s = hour + ":" + minutes + ":" + seconds + ampm;
-		}
-	else {
-		s = hour + ":" + minutes + ampm;
-		}
-	return (s);
-	}
-function stringLastField (s, chdelim) { //8/27/14 by DW
-	var ct = stringCountFields (s, chdelim);
-	if (ct == 0) { //8/31/14 by DW
-		return (s);
-		}
-	return (stringNthField (s, chdelim, ct));
-	}
-function maxLengthString (s, maxlength) { //8/27/14 by DW
-	if (s.length > maxlength) {
-		s = s.substr (0, maxlength);
-		while (true) {
-			var len = s.length; flbreak = false;
-			if (len == 0) {
-				break;
-				}
-			if (s [len - 1] == " ") {
-				flbreak = true;
-				}
-			s = s.substr (0, len - 1);
-			if (flbreak) {
-				break;
-				}
-			}
-		s = s + "...";
-		}
-	return (s);
-	}
-function formatDate (theDate, dateformat, timezone) { //8/28/14 by DW
-	if (theDate === undefined) {
-		theDate = new Date ();
-		}
-	if (dateformat === undefined) {
-		dateformat = "%c";
-		}
-	if (timezone === undefined) {
-		timezone =  - (new Date ().getTimezoneOffset () / 60);
-		}
-	try {
-		var offset = new Number (timezone);
-		var d = new Date (theDate);
-		var localTime = d.getTime ();
-		var localOffset = d.getTimezoneOffset () *  60000;
-		var utc = localTime + localOffset;
-		var newTime = utc + (3600000 * offset);
-		return (new Date (newTime).strftime (dateformat));
-		}
-	catch (tryerror) {
-		return (new Date (theDate).strftime (dateformat));
-		}
-	}
-function addPeriodToSentence (s) { //8/29/14 by DW
-	if (s.length > 0) {
-		var fladd = true;
-		var ch = s [s.length - 1];
-		switch (ch) {
-			case "!": case "?": case ":":
-				fladd = false;
-				break;
-			default:
-				if (endsWith (s, ".\"")) {
-					fladd = false;
-					}
-				else {
-					if (endsWith (s, ".'")) {
-						fladd = false;
-						}
-					}
-			}
-		if (fladd) {
-			s += ".";
-			}
-		}
-	return (s);
-	}
-function copyScalars (source, dest) { //8/31/14 by DW
-	for (var x in source) { 
-		var type, val = source [x];
-		if (val instanceof Date) { 
-			val = val.toString ();
-			}
-		type = typeof (val);
-		if ((type != "object") && (type != undefined)) {
-			dest [x] = val;
-			}
-		}
-	}
-function linkToDomainFromUrl (url, flshort, maxlength) { //10/10/14 by DW
-	var splitUrl = urlSplitter (url), host = splitUrl.host.toLowerCase ();
-	if (flshort === undefined) {
-		flshort = false;
-		}
-	if (flshort) {
-		var splithost = host.split (".");
-		if (splithost.length == 3) {
-			host = splithost [1];
-			}
-		else {
-			host = splithost [0];
-			}
-		}
-	else {
-		if (beginsWith (host, "www.")) {
-			host = stringDelete (host, 1, 4);
-			}
-		}
-	
-	if (maxlength != undefined) { //10/10/14; 10:46:56 PM by DW
-		if (host.length > maxlength) {
-			host = stringMid (host, 1, maxlength) + "...";
-			}
-		}
-	
-	return ("<a class=\"aLinkToDomainFromUrl\" href=\"" + url + "\" target=\"blank\">" + host + "</a>");
-	}
-function getRandomPassword (ctchars) { //10/14/14 by DW
-	var s= "", ch;
-	while (s.length < ctchars)  {
-		ch = String.fromCharCode (random (33, 122));
-		if (isAlpha (ch) || isNumeric (ch)) {
-			s += ch;
-			}
-		}
-	return (s.toLowerCase ());
-	}
-function monthToString (theMonthNum) { //11/4/14 by DW
-	
-	
-	var theDate;
-	if (theMonthNum === undefined) {
-		theDate = new Date ();
-		}
-	else {
-		theDate = new Date ((theMonthNum + 1) + "/1/2014");
-		}
-	return (formatDate (theDate, "%B"));
-	}
-function getCanonicalName (text) { //11/4/14 by DW
-	var s = "", ch, flNextUpper = false;
-	text = stripMarkup (text); //6/30/13 by DW
-	for (var i = 0; i < text.length; i++) {
-		ch = text [i];
-		if (isAlpha (ch) || isNumeric (ch)) {
-			if (flNextUpper) {
-				ch = ch.toUpperCase ();
-				flNextUpper = false;
-				}
-			else {
-				ch = ch.toLowerCase ();
-				}
-			s += ch;
-			}
-		else { 
-			if (ch == ' ') {
-				flNextUpper = true;
-				}
-			}
-		}
-	return (s);
-	}
-function clockNow () { //11/7/14 by DW
-	return (new Date ());
-	}
-function sleepTillTopOfMinute (callback) { //11/22/14 by DW
-	var ctseconds = Math.round (60 - (new Date ().getSeconds () + 60) % 60);
-	if (ctseconds == 0) {
-		ctseconds = 60;
-		}
-	setTimeout (everyMinute, ctseconds * 1000); 
-	}
-function scheduleNextRun (callback, ctMillisecsBetwRuns) { //11/27/14 by DW
-	var ctmilliseconds = ctMillisecsBetwRuns - (Number (new Date ().getMilliseconds ()) + ctMillisecsBetwRuns) % ctMillisecsBetwRuns;
-	setTimeout (callback, ctmilliseconds); 
-	}
-function urlEncode (s) { //12/4/14 by DW
-	return (encodeURIComponent (s));
-	}
-function popTweetNameAtStart (s) { //12/8/14 by DW
-	var ch;
-	s = trimWhitespace (s);
-	if (s.length > 0) {
-		if (s.charAt (0) == "@") {
-			while (s.charAt (0) != " ") {
-				s = s.substr (1)
-				}
-			while (s.length > 0) {
-				ch = s.charAt (0);
-				if ((ch != " ") && (ch != "-")) {
-					break;
-					}
-				s = s.substr (1)
-				}
-			}
-		}
-	return (s);
-	}
-function httpHeadRequest (url, callback) { //12/17/14 by DW
-	var jxhr = $.ajax ({
-		url: url,
-		type: "HEAD",
-		dataType: "text",
-		timeout: 30000
-		})
-	.success (function (data, status, xhr) {
-		callback (xhr); //you can do xhr.getResponseHeader to get one of the header elements
-		})
-	}
-function httpExt2MIME (ext) { //12/24/14 by DW
-	var lowerext = stringLower (ext);
-	var map = {
-		"au": "audio/basic",
-		"avi": "application/x-msvideo",
-		"bin": "application/x-macbinary",
-		"css": "text/css",
-		"dcr": "application/x-director",
-		"dir": "application/x-director",
-		"dll": "application/octet-stream",
-		"doc": "application/msword",
-		"dtd": "text/dtd",
-		"dxr": "application/x-director",
-		"exe": "application/octet-stream",
-		"fatp": "text/html",
-		"ftsc": "text/html",
-		"fttb": "text/html",
-		"gif": "image/gif",
-		"gz": "application/x-gzip",
-		"hqx": "application/mac-binhex40",
-		"htm": "text/html",
-		"html": "text/html",
-		"jpeg": "image/jpeg",
-		"jpg": "image/jpeg",
-		"js": "application/javascript",
-		"mid": "audio/x-midi",
-		"midi": "audio/x-midi",
-		"mov": "video/quicktime",
-		"mp3": "audio/mpeg",
-		"pdf": "application/pdf",
-		"png": "image/png",
-		"ppt": "application/mspowerpoint",
-		"ps": "application/postscript",
-		"ra": "audio/x-pn-realaudio",
-		"ram": "audio/x-pn-realaudio",
-		"sit": "application/x-stuffit",
-		"sys": "application/octet-stream",
-		"tar": "application/x-tar",
-		"text": "text/plain",
-		"txt": "text/plain",
-		"wav": "audio/x-wav",
-		"wrl": "x-world/x-vrml",
-		"xml": "text/xml",
-		"zip": "application/zip"
-		};
-	for (x in map) {
-		if (stringLower (x) == lowerext) {
-			return (map [x]);
-			}
-		}
-	return ("text/plain");
-	}
-function kilobyteString (num) { //1/24/15 by DW
-	num = Number (num) / 1024;
-	return (num.toFixed (2) + "K");
-	}
-function megabyteString (num) { //1/24/15 by DW
-	var onemeg = 1024 * 1024;
-	if (num <= onemeg) {
-		return (kilobyteString (num));
-		}
-	num = Number (num) / onemeg;
-	return (num.toFixed (2) + "MB");
-	}
-function gigabyteString (num) { //1/24/15 by DW
-	var onegig = 1024 * 1024 * 1024;
-	if (num <= onegig) {
-		return (megabyteString (num));
-		}
-	num = Number (num) / onegig;
-	return (num.toFixed (2) + "GB");
-	}
-function dateToNumber (theDate) { //2/15/15 by DW
-	return (Number (new Date (theDate)));
-	}
-
 var taskQ = []; 
 function qNotEmpty () {
 	return (taskQ.length > 0);
@@ -1230,7 +309,7 @@ function getCalendarPath (theDay) {
 	if (theDay == undefined) {
 		theDay = dayRiverCovers;
 		}
-	return (s3CalendarDataFolder + getDatePath (theDay, false) + ".json");
+	return (s3CalendarDataFolder + utils.getDatePath (theDay, false) + ".json");
 	}
 function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapper) { 
 	var theRiver = new Object (), starttime = new Date (), ctitems = 0, flEndOfSource = false, titles = new Object (), ctDuplicatesSkipped = 0;
@@ -1277,18 +356,18 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 		theRiver.metadata = {
 			name: listname,
 			docs: "http://scripting.com/stories/2010/12/06/innovationRiverOfNewsInJso.html",
-			secs: secondsSince (starttime),
+			secs: utils.secondsSince (starttime),
 			ctDuplicatesSkipped: ctDuplicatesSkipped,
 			whenGMT: starttime.toUTCString (),
 			whenLocal: starttime.toLocaleString (),
 			aggregator: myProductName + " v" + myVersion
 			};
-		jsontext = jsonStringify (theRiver, true);
+		jsontext = utils.jsonStringify (theRiver, true);
 		if (flAddJsonpWrapper) {
 			jsontext = "onGetRiverStream (" + jsontext + ")";
 			}
 		if (flSave) {
-			var fname = stringPopLastField (listname, ".") + ".js";
+			var fname = utils.stringPopLastField (listname, ".") + ".js";
 			stNewObject (s3UserRiversPath + fname, jsontext, "application/json", s3defaultAcl, function (error, data) {
 				console.log ("buildOneRiver: " + s3UserRiversPath + fname + ".");
 				serverData.stats.ctRiverJsonSaves++;
@@ -1313,7 +392,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 					for (var i = theDaysRiver.length - 1; i >= 0; i--) {
 						var story = theDaysRiver [i], flskip = false, reducedtitle;
 						if (flSkipDuplicateTitles) { //5/29/14 by DW
-							reducedtitle = trimWhitespace (stringLower (story.title));
+							reducedtitle = utils.trimWhitespace (utils.stringLower (story.title));
 							if (reducedtitle.length > 0) { //6/6/14 by DW
 								if (titles [reducedtitle] != undefined) { //duplicate
 									ctDuplicatesSkipped++;
@@ -1383,7 +462,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 											flgood = false; //sorry! :-(
 											}
 										else {
-											if (stringCountFields (story.enclosure.type, "/") < 2) { //something like "image" -- not a valid type
+											if (utils.stringCountFields (story.enclosure.type, "/") < 2) { //something like "image" -- not a valid type
 												flgood = false; //we read the spec, did you? :-)
 												}
 											}
@@ -1397,7 +476,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 										theItem.id = "";
 										}
 									else {
-										theItem.id = padWithZeros (story.id, 7);
+										theItem.id = utils.padWithZeros (story.id, 7);
 										}
 								if (++ctitems >= serverData.prefs.maxRiverItems) {
 									flEndOfSource = true;
@@ -1409,7 +488,7 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 								}
 							}
 						}
-					doOneDay (dateYesterday (theDay));
+					doOneDay (utils.dateYesterday (theDay));
 					}
 				});
 			}
@@ -1498,8 +577,16 @@ function fsGetObject (path, callback) {
 		});
 	}
 function fsListObjects (path, callback) {
+	function endsWithChar (s, chPossibleEndchar) {
+		if ((s === undefined) || (s.length == 0)) { 
+			return (false);
+			}
+		else {
+			return (s [s.length - 1] == chPossibleEndchar);
+			}
+		}
 	fs.readdir (path, function (err, list) {
-		if (!endsWith (path, "/")) {
+		if (!endsWithChar (path, "/")) {
 			path += "/";
 			}
 		if (list !== undefined) { //6/4/15 by DW
@@ -1531,7 +618,7 @@ function loadLocalStorage (callback) {
 		});
 	}
 function writeLocalStorageIfChanged () {
-	var s = jsonStringify (localStorage);
+	var s = utils.jsonStringify (localStorage);
 	if (s != lastLocalStorageJson) {
 		lastLocalStorageJson = s;
 		stNewObject (s3LocalStoragePath, s, "application/json", s3defaultAcl);
@@ -1559,7 +646,7 @@ function runScriptsInFolder (path, dataforscripts, callback) {
 		fs.readdir (path, function (err, list) {
 			for (var i = 0; i < list.length; i++) {
 				var fname = list [i];
-				if (endsWith (fname.toLowerCase (), ".js")) {
+				if (utils.endsWith (fname.toLowerCase (), ".js")) {
 					var f = path + fname;
 					fs.readFile (f, function (err, data) {
 						if (err) {
@@ -1668,7 +755,7 @@ function loadTodaysRiver (callback) {
 function saveTodaysRiver (callback) {
 	var now = new Date ();
 	console.log ("saveTodaysRiver: " + getCalendarPath (dayRiverCovers));
-	stNewObject (getCalendarPath (dayRiverCovers), jsonStringify (todaysRiver, true), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (getCalendarPath (dayRiverCovers), utils.jsonStringify (todaysRiver, true), "application/json", s3defaultAcl, function (error, data) {
 		serverData.stats.ctRiverSaves++;
 		serverData.stats.whenLastRiverSave = now;
 		if (error) { //4/21/15 by DW -- we were counting errors incorrectly
@@ -1691,8 +778,8 @@ function checkRiverRollover () {
 		serverData.stats.ctHitsToday = 0;
 		saveTodaysRiver (); //4/21/15 by DW -- initialize empty river
 		}
-	if (secondsSince (serverData.stats.whenLastStoryAdded) >= 60) {
-		if (!sameDay (now, dayRiverCovers)) { //rollover
+	if (utils.secondsSince (serverData.stats.whenLastStoryAdded) >= 60) {
+		if (!utils.sameDay (now, dayRiverCovers)) { //rollover
 			if (flRiverDirty) {
 				saveTodaysRiver (roll);
 				}
@@ -1744,7 +831,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		function newConvertOutline (jstruct) { //10/16/14 by DW
 			var theNewOutline = {};
 			if (jstruct ["@"] != undefined) {
-				copyScalars (jstruct ["@"], theNewOutline);
+				utils.copyScalars (jstruct ["@"], theNewOutline);
 				}
 			if (jstruct ["source:outline"] != undefined) {
 				if (jstruct ["source:outline"] instanceof Array) {
@@ -1766,7 +853,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 			if (s == null) {
 				s = "";
 				}
-			return (stripMarkup (s));
+			return (utils.stripMarkup (s));
 			}
 		function getDate (d) {
 			if (d == null) {
@@ -1778,9 +865,9 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		item.title = getString (itemFromParser.title);
 		item.link = getString (itemFromParser.link);
 		//description
-			item.description = trimWhitespace (getString (itemFromParser.description));
+			item.description = utils.trimWhitespace (getString (itemFromParser.description));
 			if (item.description.length > serverData.prefs.maxBodyLength) {
-				item.description = trimWhitespace (maxStringLength (item.description, serverData.prefs.maxBodyLength));
+				item.description = utils.trimWhitespace (maxStringLength (item.description, serverData.prefs.maxBodyLength));
 				}
 		//permalink -- updated 5/30/14 by DW
 			if (itemFromParser.permalink == undefined) {
@@ -1814,7 +901,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 	//show in console
 		var consolemsg = itemFromParser.title;
 		if (consolemsg == null) {
-			consolemsg = maxStringLength (stripMarkup (itemFromParser.description), 80);
+			consolemsg = maxStringLength (utils.stripMarkup (itemFromParser.description), 80);
 			}
 		console.log ("***addToRiver: " + consolemsg);
 	
@@ -1824,7 +911,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 function loadServerData (callback) {
 	stGetObject (s3PrefsAndStatsPath, function (error, data) {
 		if (error) {
-			if (!beginsWith (error.message, "ENOENT")) { //7/19/15 by DW
+			if (!utils.beginsWith (error.message, "ENOENT")) { //7/19/15 by DW
 				console.log ("loadServerData: error == " + error.message);
 				}
 			}
@@ -1859,8 +946,8 @@ function updateStatsBeforeSave () {
 	var now = new Date ();
 	
 	//stats
-		serverData.stats.ctHoursServerUp = secondsSince (whenServerStart) / 3600; 
-		serverData.stats.secsSinceLastFeedRead = secondsSince (serverData.stats.whenLastFeedRead); 
+		serverData.stats.ctHoursServerUp = utils.secondsSince (whenServerStart) / 3600; 
+		serverData.stats.secsSinceLastFeedRead = utils.secondsSince (serverData.stats.whenLastFeedRead); 
 		//set whenLastScanBegin and whenLastScanEnd
 			if (serverData.stats.flScanningNow) {
 				if (serverData.stats.secsSinceLastFeedRead > 15) {
@@ -1884,7 +971,7 @@ function updateStatsBeforeSave () {
 	}
 function saveServerData () {
 	updateStatsBeforeSave ();
-	stNewObject (s3PrefsAndStatsPath, jsonStringify (serverData, true), "application/json", s3defaultAcl);
+	stNewObject (s3PrefsAndStatsPath, utils.jsonStringify (serverData, true), "application/json", s3defaultAcl);
 	}
 
 function addToFeedsInLists (urlfeed) { //5/30/14 by DW
@@ -1896,7 +983,7 @@ function addToFeedsInLists (urlfeed) { //5/30/14 by DW
 		}
 	}
 function saveFeedsInLists () { //5/30/14 by DW
-	stNewObject (s3FeedsInListsPath, jsonStringify (feedsInLists, true), "application/json", s3defaultAcl);
+	stNewObject (s3FeedsInListsPath, utils.jsonStringify (feedsInLists, true), "application/json", s3defaultAcl);
 	}
 function atLeastOneSubscriber (urlfeed) {
 	return (feedsInLists [urlfeed] != undefined);
@@ -1990,7 +1077,7 @@ function addToFeedsArray (urlfeed, obj, listname) {
 function saveFeedsArray () {
 	flFeedsArrayDirty = false;
 	console.log ("saveFeedsArray: " + s3FeedsArrayPath);
-	stNewObject (s3FeedsArrayPath, jsonStringify (feedsArray, true), "application/json", s3defaultAcl);
+	stNewObject (s3FeedsArrayPath, utils.jsonStringify (feedsArray, true), "application/json", s3defaultAcl);
 	}
 function loadFeedsArray (callback) {
 	stGetObject (s3FeedsArrayPath, function (error, data) {
@@ -2035,7 +1122,7 @@ function findNextFeedToRead () {
 			}
 		}
 	
-	if (random (0, 1) == 1) {
+	if (utils.random (0, 1) == 1) {
 		for (var i = feedsArray.length - 1; i >= 0; i--) {
 			checkOne (i);
 			}
@@ -2050,7 +1137,7 @@ function findNextFeedToRead () {
 		return (undefined);
 		}
 	else {
-		if (secondsSince (feedstats.whenLastChosenToRead) < (serverData.prefs.ctMinutesBetwBuilds * 60)) { //not ready to read
+		if (utils.secondsSince (feedstats.whenLastChosenToRead) < (serverData.prefs.ctMinutesBetwBuilds * 60)) { //not ready to read
 			return (undefined);
 			}
 		else {
@@ -2096,32 +1183,32 @@ function initFeed (urlfeed, callback, flwrite) {
 		if (fspath != undefined) { //we're running on the local file system
 			switch (process.platform) { //11/1/14 by DW
 				case "win32":
-					s = replaceAll (s, "/", "_");
-					s = replaceAll (s, "?", "_");
-					s = replaceAll (s, ":", "_");
-					s = replaceAll (s, "<", "_");
-					s = replaceAll (s, ">", "_");
-					s = replaceAll (s, "\"", "_");
-					s = replaceAll (s, "\\", "_");
-					s = replaceAll (s, "|", "_");
-					s = replaceAll (s, "*", "_");
+					s = utils.replaceAll (s, "/", "_");
+					s = utils.replaceAll (s, "?", "_");
+					s = utils.replaceAll (s, ":", "_");
+					s = utils.replaceAll (s, "<", "_");
+					s = utils.replaceAll (s, ">", "_");
+					s = utils.replaceAll (s, "\"", "_");
+					s = utils.replaceAll (s, "\\", "_");
+					s = utils.replaceAll (s, "|", "_");
+					s = utils.replaceAll (s, "*", "_");
 					flprocessed = true;
 					break;
 				}
 			}
 		if (!flprocessed) {
-			s = replaceAll (s, "/", ":");
+			s = utils.replaceAll (s, "/", ":");
 			}
 		return (s);
 		}
 	function getFolderPath (urlfeed) { //return path to S3 folder for this feed
 		var s = urlfeed;
-		if (beginsWith (s, "http://")) {
-			s = stringDelete (s, 1, 7);
+		if (utils.beginsWith (s, "http://")) {
+			s = utils.stringDelete (s, 1, 7);
 			}
 		else {
-			if (beginsWith (s, "https://")) {
-				s = stringDelete (s, 1, 8);
+			if (utils.beginsWith (s, "https://")) {
+				s = utils.stringDelete (s, 1, 8);
 				}
 			}
 		s = cleanFilenameForPlatform (s); //11/1/14 by DW
@@ -2250,17 +1337,17 @@ function initFeed (urlfeed, callback, flwrite) {
 			}
 		
 		if (flwrite) {
-			stNewObject (infofilepath, jsonStringify (obj, true), "application/json", s3defaultAcl, function (error, data) {
-				secsLastInit = secondsSince (starttime);
+			stNewObject (infofilepath, utils.jsonStringify (obj, true), "application/json", s3defaultAcl, function (error, data) {
+				secsLastInit = utils.secondsSince (starttime);
 				});
 			}
 		else {
-			secsLastInit = secondsSince (starttime);
+			secsLastInit = utils.secondsSince (starttime);
 			}
 		});
 	}
 function saveFeed (feed, callback) {
-	stNewObject (feed.stats.s3MyPath, jsonStringify (feed, true), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (feed.stats.s3MyPath, utils.jsonStringify (feed, true), "application/json", s3defaultAcl, function (error, data) {
 		if (callback !== undefined) { //6/5/15 by DW
 			callback ();
 			}
@@ -2290,6 +1377,9 @@ function readFeed (urlfeed, callback) {
 				
 				flFeedsArrayDirty = true;
 			serverData.stats.ctActiveThreads++;
+			if (utils.beginsWith (urlfeed, "feed://")) { //8/13/15 by DW
+				urlfeed = "http://" + stringDelete (urlfeed, 1, 7);
+				}
 			var req = request (urlfeed);
 			var feedparser = new FeedParser ();
 			req.on ("response", function (res) {
@@ -2375,7 +1465,7 @@ function readFeed (urlfeed, callback) {
 						flFeedsArrayDirty = true;
 					
 					//exclude items that newly appear in feed but have a too-old pubdate
-						if ((item.pubDate != null) && (new Date (item.pubDate) < dateYesterday (feed.stats.mostRecentPubDate)) && (!flfirstread)) { 
+						if ((item.pubDate != null) && (new Date (item.pubDate) < utils.dateYesterday (feed.stats.mostRecentPubDate)) && (!flfirstread)) { 
 							flAddToRiver = false;
 							feed.stats.ctItemsTooOld++;
 							feed.stats.whenLastTooOldItem = starttime;
@@ -2386,8 +1476,8 @@ function readFeed (urlfeed, callback) {
 					}
 				
 				if (serverData.prefs.flWriteItemsToFiles) { //debugging
-					var path = feed.stats.s3FolderPath + "items/" + padWithZeros (ctitemsthisfeed++, 3) + ".json";
-					stNewObject (path, jsonStringify (item, true), "application/json", s3defaultAcl);
+					var path = feed.stats.s3FolderPath + "items/" + utils.padWithZeros (ctitemsthisfeed++, 3) + ".json";
+					stNewObject (path, utils.jsonStringify (item, true), "application/json", s3defaultAcl);
 					}
 				});
 			feedparser.on ("end", function () {
@@ -2403,7 +1493,7 @@ function readFeed (urlfeed, callback) {
 						console.log ("readFeed: ctHistoryItemsDeleted == " + ctHistoryItemsDeleted);
 						}
 					
-				feed.stats.ctSecsLastRead = secondsSince (starttime);
+				feed.stats.ctSecsLastRead = utils.secondsSince (starttime);
 				saveFeed (feed, function () {
 					if (callback !== undefined) { //6/5/15 by DW
 						callback ();
@@ -2492,8 +1582,8 @@ function readOneList (listname, filepath) {
 	}
 function initList (name, callback) {
 	var foldername = name, infofilepath;
-	if (endsWith (foldername, ".opml")) {
-		foldername = stringDelete (foldername, foldername.length - 4, 5);
+	if (utils.endsWith (foldername, ".opml")) {
+		foldername = utils.stringDelete (foldername, foldername.length - 4, 5);
 		}
 	infofilepath = s3ListsDataFolder + foldername + "/listInfo.json";
 	stGetObject (infofilepath, function (error, data) {
@@ -2552,7 +1642,7 @@ function initList (name, callback) {
 			callback (obj);
 			}
 		
-		stNewObject (infofilepath, jsonStringify (obj, true), "application/json", s3defaultAcl, function (error, data) {
+		stNewObject (infofilepath, utils.jsonStringify (obj, true), "application/json", s3defaultAcl, function (error, data) {
 			});
 		});
 	}
@@ -2571,8 +1661,8 @@ function loadListsFromFolder () {
 		else {
 			if (obj.Size > 0) { //it's a file
 				var filepath = obj.s3path;
-				var listname = stringNthField (filepath, "/", stringCountFields (filepath, "/")); //something like myList.opml
-				if (endsWith (listname, ".opml")) { //11/1/14 by DW
+				var listname = utils.stringNthField (filepath, "/", utils.stringCountFields (filepath, "/")); //something like myList.opml
+				if (utils.endsWith (listname, ".opml")) { //11/1/14 by DW
 					serverData.stats.listNames [serverData.stats.listNames.length] = listname; //5/28/14 by DW
 					initList (listname, function () {
 						qAddTask ("readOneList (\"" + listname + "\", \"" + filepath + "\")");
@@ -2613,13 +1703,13 @@ function getOneFeed (urlfeed, callback) { //11/26/14 by DW
 		});
 	}
 function getOneRiver (fname, callback) { //11/28/14 by DW
-	var name = stringPopLastField (fname, "."); //get rid of .opml extension if present
+	var name = utils.stringPopLastField (fname, "."); //get rid of .opml extension if present
 	var path = s3UserRiversPath + name + ".js";
 	stGetObject (path, function (error, data) {
 		var s;
 		if (error) {
 			s = "";
-			console.log ("getOneRiver: error == " + jsonStringify (error));
+			console.log ("getOneRiver: error == " + utils.jsonStringify (error));
 			}
 		else {
 			s = data.Body.toString ();
@@ -2657,9 +1747,9 @@ function getFeedMetadata (url, callback) { //12/1/14 by DW
 function saveSubscriptionList (listname, xmltext) { //12/1/14 by DW
 	var path = s3UserListsPath + listname, now = new Date ();
 	stNewObject (path, xmltext, "text/xml", s3defaultAcl, function (error, data) {
-		var serialnum = padWithZeros (++serverData.stats.backupSerialnum, 3);
-		var fname = stringPopLastField (listname, ".") + serialnum + ".opml"; //something like movies024.opml
-		var backuppath = s3BackupsFolder + getDatePath (undefined, true) + fname;
+		var serialnum = utils.padWithZeros (++serverData.stats.backupSerialnum, 3);
+		var fname = utils.stringPopLastField (listname, ".") + serialnum + ".opml"; //something like movies024.opml
+		var backuppath = s3BackupsFolder + utils.getDatePath (undefined, true) + fname;
 		stNewObject (backuppath, xmltext, "text/xml", s3defaultAcl, function (error, data) {
 			serverData.stats.ctListSaves++;
 			serverData.stats.whenLastListSave = now; 
@@ -2714,7 +1804,7 @@ function renewNextSubscription () { //6/4/15 by DW
 		for (var i = 0; i < feedsArray.length; i++) {
 			theFeed = feedsArray [i];
 			if (theFeed.cloud !== undefined) {
-				if (secondsSince (theFeed.whenLastCloudRenew) > (23 * 60 * 60)) { //ready to be renewed
+				if (utils.secondsSince (theFeed.whenLastCloudRenew) > (23 * 60 * 60)) { //ready to be renewed
 					var urlCloudServer = "http://" + theFeed.cloud.domain + ":" + theFeed.cloud.port + theFeed.cloud.path;
 					pleaseNotify (urlCloudServer, undefined, myPort, "/feedupdated", theFeed.url, theFeed, function () {
 						console.log ("renewNextSubscription: urlCloudServer == " + urlCloudServer);
@@ -2768,14 +1858,14 @@ function copyIndexFile () { //6/1/14 by DW
 function buildRiversArray () { //6/1/14 by DW -- build a data structure used by the river browser
 	var riversArray = new Array ();
 	for (var i = 0; i < serverData.stats.listNames.length; i++) {
-		var obj = new Object (), rivername = stringPopLastField (serverData.stats.listNames [i], ".");
+		var obj = new Object (), rivername = utils.stringPopLastField (serverData.stats.listNames [i], ".");
 		obj.url = "rivers/" + rivername + ".js"; //designed for an app running at the top level of the bucket
 		obj.title = rivername;
 		obj.longTitle =  rivername;
 		obj.description = "";
 		riversArray [i] = obj;
 		}
-	stNewObject (s3RiversArrayPath, jsonStringify (riversArray, true), "application/json", s3defaultAcl, function (error, data) {
+	stNewObject (s3RiversArrayPath, utils.jsonStringify (riversArray, true), "application/json", s3defaultAcl, function (error, data) {
 		console.log ("buildRiversArray: " + s3RiversArrayPath);
 		});
 	}
@@ -2847,7 +1937,7 @@ function everyMinute () {
 					flFeedsInListsDirty = false;
 					}
 				
-				if (secondsSince (whenLastRiversBuild) >= 59) { //8/6/14 by DW
+				if (utils.secondsSince (whenLastRiversBuild) >= 59) { //8/6/14 by DW
 					loadListsFromFolder ();
 					flFeedsInListsDirty = true;
 					}
@@ -2858,7 +1948,7 @@ function everyMinute () {
 		console.log ("everyMinute, error == " + err.message);
 		}
 	
-	sleepTillTopOfMinute (everyMinute);
+	utils.sleepTillTopOfMinute (everyMinute);
 	}
 function everyFiveMinutes () {
 	if (serverData.prefs.enabled) {
@@ -2876,7 +1966,7 @@ function handleRequest (httpRequest, httpResponse) {
 		}
 	function respondWithObject (obj) {
 		writeHead ("application/json");
-		httpResponse.end (jsonStringify (obj));    
+		httpResponse.end (utils.jsonStringify (obj));    
 		}
 	try {
 		var parsedUrl = urlpack.parse (httpRequest.url, true), now = new Date (), startTime = now;
@@ -2884,11 +1974,11 @@ function handleRequest (httpRequest, httpResponse) {
 		
 		//set host, port, flLocalRequest
 			host = httpRequest.headers.host;
-			if (stringContains (host, ":")) {
-				port = stringNthField (host, ":", 2);
-				host = stringNthField (host, ":", 1);
+			if (utils.stringContains (host, ":")) {
+				port = utils.stringNthField (host, ":", 2);
+				host = utils.stringNthField (host, ":", 1);
 				}
-			flLocalRequest = beginsWith (host, "localhost");
+			flLocalRequest = utils.beginsWith (host, "localhost");
 		//show the request on the console
 			var localstring = "";
 			if (flLocalRequest) {
@@ -2932,16 +2022,16 @@ function handleRequest (httpRequest, httpResponse) {
 							hitsThisRun: serverData.stats.ctHitsThisRun
 							};
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (jsonStringify (myStatus, true));    
+						httpResponse.end (utils.jsonStringify (myStatus, true));    
 						break;
 					case "/serverdata":
 						updateStatsBeforeSave ();
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (jsonStringify (serverData.stats, true));    
+						httpResponse.end (utils.jsonStringify (serverData.stats, true));    
 						break;
 					case "/feedstats":
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (jsonStringify (feedsArray, true));    
+						httpResponse.end (utils.jsonStringify (feedsArray, true));    
 						break;
 					case "/buildallrivers":
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
@@ -2978,19 +2068,19 @@ function handleRequest (httpRequest, httpResponse) {
 						break;
 					case "/getlistnames": //11/11/14 by DW
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
-						httpResponse.end (jsonStringify (serverData.stats.listNames));    
+						httpResponse.end (utils.jsonStringify (serverData.stats.listNames));    
 						break;
 					case "/getalllists": //11/11/14 by DW
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 						getAllLists (function (theLists) {
-							httpResponse.end (jsonStringify (theLists));    
+							httpResponse.end (utils.jsonStringify (theLists));    
 							});
 						break;
 					case "/getonefeed": //11/26/14 by DW
 						var url = parsedUrl.query.url;
 						httpResponse.writeHead (200, {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*"});
 						getOneFeed (url, function (theFeed) {
-							httpResponse.end (jsonStringify (theFeed));    
+							httpResponse.end (utils.jsonStringify (theFeed));    
 							});
 						break;
 					case "/getoneriver": //11/28/14 by DW 
@@ -3006,7 +2096,7 @@ function handleRequest (httpRequest, httpResponse) {
 								httpResponse.end ("");    
 								}
 							else {
-								httpResponse.end (jsonStringify (data));    
+								httpResponse.end (utils.jsonStringify (data));    
 								}
 							});
 						break;

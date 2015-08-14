@@ -30,7 +30,7 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 Now handles feeds whose address begins with feed://. We just translate it to http://. Previously there would be an error reading the feed.
 
-Also created a module, utils.js, instead of including the source in the main body of river.js. River4 was the first Node app I shipped, I've since learned how to modularize Node apps. 
+Also created a module, <a href="https://github.com/scripting/river4/blob/master/lib/utils.js">utils.js</a>, instead of including the source in the main body of river.js. River4 was the first Node app I shipped, I've since learned how to modularize Node apps. 
 
 ##### v0.117 -- 7/20/15 by DW
 

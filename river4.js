@@ -1,4 +1,4 @@
-var myVersion = "0.118d", myProductName = "River4"; 
+var myVersion = "0.118e", myProductName = "River4"; 
 
 /*  The MIT License (MIT)
 	Copyright (c) 2014-2015 Dave Winer
@@ -867,7 +867,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 		//description
 			item.description = utils.trimWhitespace (getString (itemFromParser.description));
 			if (item.description.length > serverData.prefs.maxBodyLength) {
-				item.description = utils.trimWhitespace (maxStringLength (item.description, serverData.prefs.maxBodyLength));
+				item.description = utils.trimWhitespace (utils.maxStringLength (item.description, serverData.prefs.maxBodyLength));
 				}
 		//permalink -- updated 5/30/14 by DW
 			if (itemFromParser.permalink == undefined) {
@@ -901,7 +901,7 @@ function addToRiver (urlfeed, itemFromParser, callback) {
 	//show in console
 		var consolemsg = itemFromParser.title;
 		if (consolemsg == null) {
-			consolemsg = maxStringLength (utils.stripMarkup (itemFromParser.description), 80);
+			consolemsg = utils.maxStringLength (utils.stripMarkup (itemFromParser.description), 80);
 			}
 		console.log ("***addToRiver: " + consolemsg);
 	
@@ -1378,7 +1378,7 @@ function readFeed (urlfeed, callback) {
 				flFeedsArrayDirty = true;
 			serverData.stats.ctActiveThreads++;
 			if (utils.beginsWith (urlfeed, "feed://")) { //8/13/15 by DW
-				urlfeed = "http://" + stringDelete (urlfeed, 1, 7);
+				urlfeed = "http://" + utils.stringDelete (urlfeed, 1, 7);
 				}
 			var req = request (urlfeed);
 			var feedparser = new FeedParser ();

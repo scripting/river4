@@ -32,7 +32,9 @@ New value in config.json, flWatchForQuitFile. If present and true, River4 will w
 
 We look once a second. If the file is present, River4 deletes the file, posts a message to the console, and quits. 
 
-The assumption is that some service like <a href="https://github.com/foreverjs/forever">forever</a> is watching and will restart River4. This is used in getting updates to the ec2ForPoets server that's running River4. 
+The assumption is that some service like <a href="https://github.com/foreverjs/forever">forever</a> is watching and will restart River4. 
+
+This is used in getting updates to the ec2ForPoets server that's running River4. 
 
 <a href="https://gist.github.com/scripting/0baafa8b0f92c763de93">Example</a> of a config.json with this value set true.
 

@@ -26,6 +26,12 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 #### Updates
 
+##### v0.120 -- 8/21/15 by DW
+
+The flWatchForQuitFile approach didn't work because after the quitfile is deleted it will be replaced by the sync app, and we'll just quit again, every minute. 
+
+Better: Watch for a change to the mod date of the river4.js file. Quit if it changes. But only if the feature is enabled via config.flWatchAppDateChange boolean. 
+
 ##### v0.119 -- 8/21/15 by DW
 
 New value in config.json, flWatchForQuitFile. If present and true, River4 will watch for the presence of a file named quitnow.txt in the same folder as river4.js. 

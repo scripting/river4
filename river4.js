@@ -1,4 +1,4 @@
-var myVersion = "0.119d", myProductName = "River4"; 
+var myVersion = "0.120c", myProductName = "River4"; 
 
 /*  The MIT License (MIT)
 	Copyright (c) 2014-2015 Dave Winer
@@ -40,7 +40,7 @@ var utils = require ("./lib/utils.js"); //8/13/15 by DW
 
 var fspath = process.env.fspath; //9/24/14 by DW
 var remotePassword = process.env.password; //12/4/14 by DW
-var flWatchForQuitFile = false, fnameQuitFile = "quitnow.txt"; //8/20/15 by DW -- can only be sent through config.json
+var flWatchAppDateChange = false, fnameApp = "river4.js", origAppModDate; //8/21/15 by DW -- can only be sent through config.json
     
 var s3path = process.env.s3path; 
 var s3UserListsPath; 
@@ -1879,6 +1879,23 @@ function buildAllRivers () { //queue up tasks to build each of the river.js file
 		}
 	whenLastRiversBuild = new Date (); //8/6/14 by DW
 	}
+function getAppModDate (callback) { //8/21/15 by DW
+	fs.exists (fnameApp, function (flExists) {
+		if (flExists) {
+			fs.stat (fnameApp, function (err, stats) {
+				if (err) {
+					callback (undefined);
+					}
+				else {
+					callback (new Date (stats.mtime).toString ());
+					}
+				});
+			}
+		else {
+			callback (undefined);
+			}
+		});
+	}
 function everyQuarterSecond () {
 	if (serverData.prefs.enabled) {
 		if (countHttpSockets () < serverData.prefs.maxThreads) {
@@ -1898,13 +1915,12 @@ function everySecond () {
 				} 
 			}
 		}
-	if (flWatchForQuitFile) { //8/20/15 by DW
-		fs.exists (fnameQuitFile, function (flExists) {
-			if (flExists) {
-				fs.unlink (fnameQuitFile, function () {
-					console.log ("everySecond: " + fnameQuitFile + " was found and deleted. " + myProductName + " is quitting now.");
-					process.exit (0);
-					});
+	if (flWatchAppDateChange) { //8/21/15 by DW
+		getAppModDate (function (theModDate) {
+			if (theModDate != origAppModDate) {
+				console.log ("everySecond: " + theModDate + " != " + origAppModDate);
+				console.log ("everySecond: " + fnameApp + " has been updated. " + myProductName + " is quitting now.");
+				process.exit (0);
 				}
 			});
 		}
@@ -2223,9 +2239,14 @@ function loadConfig (callback) { //5/9/15 by DW
 			if (config.PORT !== undefined) {
 				myPort = config.PORT;
 				}
-			if (config.flWatchForQuitFile !== undefined) { //8/20/15 by DW
-				flWatchForQuitFile = utils.getBoolean (config.flWatchForQuitFile);
+			
+			if (config.flWatchAppDateChange !== undefined) { //8/21/15 by DW
+				flWatchAppDateChange = utils.getBoolean (config.flWatchAppDateChange);
 				}
+			if (config.fnameApp !== undefined) { //8/21/15 by DW
+				fnameApp = config.fnameApp;
+				}
+			
 			if (config.s3defaultAcl !== s3defaultAcl) {
 				s3defaultAcl = config.s3defaultAcl;
 				}
@@ -2267,29 +2288,33 @@ function startup () {
 		s3ListsDataFolder = s3path + "data/lists/";
 		s3IndexFile = s3path + "index.html";
 		
-		loadServerData (function () {
-			applyPrefs ();
-			
-			
-			saveServerData (); //so hours-server-up stats update immediately
-			
-			loadFeedsArray (function () {
-				loadLocalStorage (function () { //6/20/15 by DW
-					loadTodaysRiver (function () {
-						loadListsFromFolder (); //adds tasks to the queue
-						//make sure all the top level folders are created -- 7/19/15 by DW
-							if (fspath !== undefined) {
-								fsSureFilePath (s3UserRiversPath, function () {
-									fsSureFilePath (s3UserListsPath, function () {
+		getAppModDate (function (appModDate) { //set origAppModDate -- 8/21/15 by DW
+			origAppModDate = appModDate;
+			console.log ("startup: origAppModDate == " + origAppModDate);
+			loadServerData (function () {
+				applyPrefs ();
+				
+				
+				saveServerData (); //so hours-server-up stats update immediately
+				
+				loadFeedsArray (function () {
+					loadLocalStorage (function () { //6/20/15 by DW
+						loadTodaysRiver (function () {
+							loadListsFromFolder (); //adds tasks to the queue
+							//make sure all the top level folders are created -- 7/19/15 by DW
+								if (fspath !== undefined) {
+									fsSureFilePath (s3UserRiversPath, function () {
+										fsSureFilePath (s3UserListsPath, function () {
+											});
 										});
-									});
-								}
-						http.createServer (handleRequest).listen (myPort);
-						setInterval (everySecond, 1000); 
-						setInterval (everyQuarterSecond, 250);
-						setInterval (everyFiveMinutes, 300000); 
-						
-						everyMinute (); //it schedules its own next run
+									}
+							http.createServer (handleRequest).listen (myPort);
+							setInterval (everySecond, 1000); 
+							setInterval (everyQuarterSecond, 250);
+							setInterval (everyFiveMinutes, 300000); 
+							
+							everyMinute (); //it schedules its own next run
+							});
 						});
 					});
 				});

@@ -28,25 +28,11 @@ Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFile
 
 ##### v0.120 -- 8/21/15 by DW
 
-The flWatchForQuitFile approach didn't work because after the quitfile is deleted it will be replaced by the sync app, and we'll just quit again, every minute. 
-
-Better: Watch for a change to the mod date of the river4.js file. Quit if it changes. But only if the feature is enabled via config.flWatchAppDateChange boolean. 
+Watch for a change to the mod date of the river4.js file. Quit if it changes. But only if the feature is enabled via config.flWatchAppDateChange boolean. 
 
 If you changed the name of the River4 app, you can provide the new name in config.fnameApp.
 
 Here's an <a href="https://gist.github.com/scripting/fef04dbef72b745ed83f">example</a> of a config.json for this setup.
-
-##### v0.119 -- 8/21/15 by DW
-
-New value in config.json, flWatchForQuitFile. If present and true, River4 will watch for the presence of a file named quitnow.txt in the same folder as river4.js. 
-
-We look once a second. If the file is present, River4 deletes the file, posts a message to the console, and quits. 
-
-The assumption is that some service like <a href="https://github.com/foreverjs/forever">forever</a> is watching and will restart River4. 
-
-This is used in getting updates to the ec2ForPoets server that's running River4. 
-
-<a href="https://gist.github.com/scripting/0baafa8b0f92c763de93">Example</a> of a config.json with this value set true.
 
 ##### v0.118 -- 8/13/15 by DW
 

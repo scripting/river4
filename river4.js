@@ -1,4 +1,4 @@
-var myVersion = "0.118e", myProductName = "River4"; 
+var myVersion = "0.119d", myProductName = "River4"; 
 
 /*  The MIT License (MIT)
 	Copyright (c) 2014-2015 Dave Winer
@@ -40,6 +40,7 @@ var utils = require ("./lib/utils.js"); //8/13/15 by DW
 
 var fspath = process.env.fspath; //9/24/14 by DW
 var remotePassword = process.env.password; //12/4/14 by DW
+var flWatchForQuitFile = false, fnameQuitFile = "quitnow.txt"; //8/20/15 by DW -- can only be sent through config.json
     
 var s3path = process.env.s3path; 
 var s3UserListsPath; 
@@ -545,7 +546,7 @@ function fsNewObject (path, data, type, acl, callback, metadata) {
 			var dataAboutWrite = {
 				};
 			if (err) {
-				console.log ("fsNewObject: error == " + jsonStringify (err));
+				console.log ("fsNewObject: error == " + JSON.stringify (err, undefined, 4));
 				fsStats.ctWriteErrors++;
 				if (callback != undefined) {
 					callback (err, dataAboutWrite);
@@ -1897,6 +1898,16 @@ function everySecond () {
 				} 
 			}
 		}
+	if (flWatchForQuitFile) { //8/20/15 by DW
+		fs.exists (fnameQuitFile, function (flExists) {
+			if (flExists) {
+				fs.unlink (fnameQuitFile, function () {
+					console.log ("everySecond: " + fnameQuitFile + " was found and deleted. " + myProductName + " is quitting now.");
+					process.exit (0);
+					});
+				}
+			});
+		}
 	}
 function everyMinute () {
 	try {
@@ -1943,6 +1954,7 @@ function everyMinute () {
 					}
 				}
 			}
+		
 		}
 	catch (err) {
 		console.log ("everyMinute, error == " + err.message);
@@ -2210,6 +2222,9 @@ function loadConfig (callback) { //5/9/15 by DW
 				}
 			if (config.PORT !== undefined) {
 				myPort = config.PORT;
+				}
+			if (config.flWatchForQuitFile !== undefined) { //8/20/15 by DW
+				flWatchForQuitFile = utils.getBoolean (config.flWatchForQuitFile);
 				}
 			if (config.s3defaultAcl !== s3defaultAcl) {
 				s3defaultAcl = config.s3defaultAcl;

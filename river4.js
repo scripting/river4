@@ -1,4 +1,4 @@
-var myVersion = "0.120c", myProductName = "River4"; 
+var myVersion = "0.122a", myProductName = "River4"; 
 
 /*  The MIT License (MIT)
 	Copyright (c) 2014-2015 Dave Winer
@@ -137,6 +137,7 @@ var fnameConfig = "config.json"; //5/9/15 by DW
 var appConfig; //6/4/15 by DW -- the contents of config.json available to all code
 
 var addToRiverCallbacksFolder = "callbacks/addToRiver/"; //6/19/15 by DW
+var flScheduledEveryMinute = false; //8/22/15 by DW
 
 
 
@@ -405,12 +406,16 @@ function buildOneRiver (listname, flSave, flSkipDuplicateTitles, flAddJsonpWrapp
 							if (story.feedUrl != lastfeedurl) {
 								var feedstats = findInFeedsArray (story.feedUrl);
 								flThisFeedInList = false;
-								for (var j = 0; j < feedstats.lists.length; j++) {
-									if (feedstats.lists [j] == listname) {
-										flThisFeedInList = true;
-										break;
+								
+								if (feedstats !== undefined) { //10/30/15 by DW -- an item appears in a river but we're no longers subscribed to its feed
+									for (var j = 0; j < feedstats.lists.length; j++) {
+										if (feedstats.lists [j] == listname) {
+											flThisFeedInList = true;
+											break;
+											}
 										}
 									}
+								
 								if (flThisFeedInList) {
 									var ix = theRiver.updatedFeeds.updatedFeed.length;
 									theRiver.updatedFeeds.updatedFeed [ix] = new Object ();
@@ -1903,26 +1908,10 @@ function everyQuarterSecond () {
 			}
 		}
 	}
-function everySecond () {
+function everyFiveMinutes () {
 	if (serverData.prefs.enabled) {
-		var ct = serverData.prefs.ctReadsPerSecond;
-		for (var i = 0; i < ct; i++) {
-			if (countHttpSockets () <= serverData.prefs.maxThreads) {
-				var feedstats = findNextFeedToRead ();
-				if (feedstats !== undefined) { //a feed is ready to read
-					readFeed (feedstats.url);
-					}
-				} 
-			}
-		}
-	if (flWatchAppDateChange) { //8/21/15 by DW
-		getAppModDate (function (theModDate) {
-			if (theModDate != origAppModDate) {
-				console.log ("everySecond: " + theModDate + " != " + origAppModDate);
-				console.log ("everySecond: " + fnameApp + " has been updated. " + myProductName + " is quitting now.");
-				process.exit (0);
-				}
-			});
+		buildAllRivers ();
+		buildRiversArray ();
 		}
 	}
 function everyMinute () {
@@ -1970,18 +1959,38 @@ function everyMinute () {
 					}
 				}
 			}
-		
 		}
 	catch (err) {
 		console.log ("everyMinute, error == " + err.message);
 		}
-	
-	utils.sleepTillTopOfMinute (everyMinute);
 	}
-function everyFiveMinutes () {
+function everySecond () {
+	if (!flScheduledEveryMinute) { //8/22/15 by DW
+		if (new Date ().getSeconds () == 0) {
+			setInterval (everyMinute, 60000); 
+			setInterval (everyFiveMinutes, 300000); 
+			flScheduledEveryMinute = true;
+			everyMinute (); //it's the top of the minute, we have to do one now
+			}
+		}
+	if (flWatchAppDateChange) { //8/21/15 by DW
+		getAppModDate (function (theModDate) {
+			if (theModDate != origAppModDate) {
+				console.log ("everySecond: " + fnameApp + " has been updated. " + myProductName + " is quitting now.");
+				process.exit (0);
+				}
+			});
+		}
 	if (serverData.prefs.enabled) {
-		buildAllRivers ();
-		buildRiversArray ();
+		var ct = serverData.prefs.ctReadsPerSecond;
+		for (var i = 0; i < ct; i++) {
+			if (countHttpSockets () <= serverData.prefs.maxThreads) {
+				var feedstats = findNextFeedToRead ();
+				if (feedstats !== undefined) { //a feed is ready to read
+					readFeed (feedstats.url);
+					}
+				} 
+			}
 		}
 	}
 
@@ -2290,7 +2299,6 @@ function startup () {
 		
 		getAppModDate (function (appModDate) { //set origAppModDate -- 8/21/15 by DW
 			origAppModDate = appModDate;
-			console.log ("startup: origAppModDate == " + origAppModDate);
 			loadServerData (function () {
 				applyPrefs ();
 				
@@ -2309,11 +2317,9 @@ function startup () {
 										});
 									}
 							http.createServer (handleRequest).listen (myPort);
-							setInterval (everySecond, 1000); 
 							setInterval (everyQuarterSecond, 250);
-							setInterval (everyFiveMinutes, 300000); 
-							
-							everyMinute (); //it schedules its own next run
+							setInterval (everySecond, 1000); 
+							everyMinute (); //do one immediately on startup
 							});
 						});
 					});

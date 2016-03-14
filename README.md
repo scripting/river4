@@ -2,6 +2,8 @@
 
 River4 is a JavaScript river-of-news aggregator running in Node.js
 
+Important: <a href="https://github.com/scripting/river5">River5</a> has been released. It's simpler to set up and runs faster. 
+
 #### How to install
 
 Here are the <a href="http://river4.smallpict.com/2015/07/20/usingRiver4WithFilesystemStorage.html">instructions</a> for setting up River4 on a system running Node.js, using the local file system for storage.
